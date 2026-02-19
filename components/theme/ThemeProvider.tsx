@@ -2,7 +2,17 @@
 
 import React, { createContext, useContext, useEffect } from 'react';
 import { usePreferences } from '@/hooks/usePreferences';
-import type { ThemePreset, FontSize } from '@/types';
+import { ThemePreset, FontSize } from '@/types';
+import type { Preferences } from '@/types';
+
+const DEFAULT_PREFERENCES: Preferences = {
+  id: 'default',
+  theme: ThemePreset.LIGHT,
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontSize: FontSize.MD,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
 
 interface ThemeContextValue {
   theme: ThemePreset;
@@ -72,16 +82,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     await setFontFamilyPreference(family);
   };
 
-  if (loading || !preferences) {
-    return <div className="min-h-screen bg-white dark:bg-gray-900">{children}</div>;
-  }
+  // Use real preferences if loaded, otherwise fall back to defaults
+  // so the context is always available even when the backend is offline
+  const effective = preferences ?? DEFAULT_PREFERENCES;
 
   return (
     <ThemeContext.Provider
       value={{
-        theme: preferences.theme,
-        fontSize: preferences.fontSize,
-        fontFamily: preferences.fontFamily,
+        theme: effective.theme,
+        fontSize: effective.fontSize,
+        fontFamily: effective.fontFamily,
         setTheme,
         setFontSize,
         setFontFamily,
