@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-family: system-ui, -apple-system, sans-serif;
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: #171717;
+  --pdf-filter: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  color: var(--foreground);
+  background: var(--background);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Theme-specific styles */
+.theme-light {
+  --background: #ffffff;
+  --foreground: #171717;
+  --pdf-filter: none;
+}
+
+.theme-dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --pdf-filter: invert(1) hue-rotate(180deg);
+}
+
+.theme-sepia {
+  --background: #f4ecd8;
+  --foreground: #5b4636;
+  --pdf-filter: sepia(0.5) brightness(1.1);
+}
+
+.theme-forest {
+  --background: #e8f5e9;
+  --foreground: #1b5e20;
+  --pdf-filter: sepia(0.2) hue-rotate(60deg) brightness(1.05);
+}
+
+.theme-ocean {
+  --background: #e3f2fd;
+  --foreground: #0d47a1;
+  --pdf-filter: sepia(0.2) hue-rotate(180deg) brightness(1.05);
+}
+
+/* Animation for toast */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
