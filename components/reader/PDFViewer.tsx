@@ -4,9 +4,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import { Loading } from '../common/Loading';
 
-// Set up PDF.js worker
+// Use a locally served worker to avoid CDN version mismatches
 if (typeof window !== 'undefined') {
-  pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+  pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 }
 
 interface PDFViewerProps {
