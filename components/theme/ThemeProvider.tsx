@@ -25,7 +25,7 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { preferences, loading, setTheme, setFontSize, setFontFamily } = usePreferences();
+  const { preferences, loading, setTheme: setThemePreference, setFontSize: setFontSizePreference, setFontFamily: setFontFamilyPreference } = usePreferences();
 
   // Apply theme to document
   useEffect(() => {
@@ -58,6 +58,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
     root.style.setProperty('--font-size', fontSizes[preferences.fontSize]);
   }, [preferences]);
+
+  // Wrap the preference setters to match the interface
+  const setTheme = async (theme: ThemePreset): Promise<void> => {
+    await setThemePreference(theme);
+  };
+
+  const setFontSize = async (size: FontSize): Promise<void> => {
+    await setFontSizePreference(size);
+  };
+
+  const setFontFamily = async (family: string): Promise<void> => {
+    await setFontFamilyPreference(family);
+  };
 
   if (loading || !preferences) {
     return <div className="min-h-screen bg-white dark:bg-gray-900">{children}</div>;
