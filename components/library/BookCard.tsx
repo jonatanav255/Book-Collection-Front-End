@@ -37,6 +37,7 @@ export function BookCard({ book, onDelete }: BookCardProps) {
               className="object-cover"
               onError={() => setImageError(true)}
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              quality={95}
             />
 
             {/* Progress Overlay */}

@@ -22,6 +22,9 @@ body {
   font-size: var(--font-size);
   color: var(--foreground);
   background: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 @layer utilities {
@@ -34,30 +37,40 @@ body {
 .theme-light {
   --background: #ffffff;
   --foreground: #171717;
+  --icon-color: #1f2937; /* gray-800 */
+  --icon-color-secondary: #3b82f6; /* blue-500 */
   --pdf-filter: none;
 }
 
 .theme-dark {
   --background: #0a0a0a;
   --foreground: #ededed;
+  --icon-color: #e5e7eb; /* gray-200 */
+  --icon-color-secondary: #60a5fa; /* blue-400 */
   --pdf-filter: invert(1) hue-rotate(180deg);
 }
 
 .theme-sepia {
   --background: #f4ecd8;
   --foreground: #5b4636;
+  --icon-color: #78350f; /* brown-900 */
+  --icon-color-secondary: #92400e; /* amber-800 */
   --pdf-filter: sepia(0.5) brightness(1.1);
 }
 
 .theme-forest {
   --background: #e8f5e9;
   --foreground: #1b5e20;
+  --icon-color: #14532d; /* green-900 */
+  --icon-color-secondary: #15803d; /* green-700 */
   --pdf-filter: sepia(0.2) hue-rotate(60deg) brightness(1.05);
 }
 
 .theme-ocean {
   --background: #e3f2fd;
   --foreground: #0d47a1;
+  --icon-color: #1e3a8a; /* blue-900 */
+  --icon-color-secondary: #1d4ed8; /* blue-700 */
   --pdf-filter: sepia(0.2) hue-rotate(180deg) brightness(1.05);
 }
 

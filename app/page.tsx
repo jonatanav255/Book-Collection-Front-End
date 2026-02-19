@@ -129,7 +129,7 @@ export default function LibraryPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <Library className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <Library className="w-8 h-8" style={{ color: 'var(--icon-color-secondary)' }} />
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                 My Library
@@ -146,7 +146,7 @@ export default function LibraryPage() {
               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               title="Settings"
             >
-              <SettingsIcon className="w-6 h-6" />
+              <SettingsIcon className="w-6 h-6" style={{ color: 'var(--icon-color)' }} />
             </button>
             <UploadButton onUpload={handleUpload} isLoading={uploading} />
           </div>

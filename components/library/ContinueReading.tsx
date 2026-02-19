@@ -33,6 +33,7 @@ export function ContinueReading({ book }: ContinueReadingProps) {
             width={128}
             height={192}
             className="w-full h-full object-cover"
+            quality={95}
           />
         </div>
 

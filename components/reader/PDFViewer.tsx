@@ -89,8 +89,15 @@ export function PDFViewer({
         const context = canvas.getContext('2d');
         if (!context) return;
 
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+        // Account for device pixel ratio for sharp rendering on retina displays
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        canvas.height = viewport.height * devicePixelRatio;
+        canvas.width = viewport.width * devicePixelRatio;
+        canvas.style.height = `${viewport.height}px`;
+        canvas.style.width = `${viewport.width}px`;
+
+        // Scale the context to match device pixel ratio
+        context.scale(devicePixelRatio, devicePixelRatio);
 
         const renderContext = {
           canvasContext: context,
