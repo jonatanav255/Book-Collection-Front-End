@@ -55,7 +55,7 @@ export default function LibraryPage() {
       result = result.filter(
         (book) =>
           book.title.toLowerCase().includes(searchLower) ||
-          book.author.toLowerCase().includes(searchLower)
+          (book.author || '').toLowerCase().includes(searchLower)
       );
     }
 
