@@ -10,7 +10,8 @@ import type {
   LibraryExport,
 } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+// Base URL should be http://localhost:8080/api (the /api prefix is included)
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -44,13 +45,13 @@ export const booksApi = {
     if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
     if (params?.status) queryParams.append('status', params.status);
 
-    const url = `${API_URL}/api/books${queryParams.toString() ? `?${queryParams}` : ''}`;
+    const url = `${API_URL}/books${queryParams.toString() ? `?${queryParams}` : ''}`;
     const response = await fetch(url);
     return handleResponse<Book[]>(response);
   },
 
   async getById(id: string): Promise<Book> {
-    const response = await fetch(`${API_URL}/api/books/${id}`);
+    const response = await fetch(`${API_URL}/books/${id}`);
     return handleResponse<Book>(response);
   },
 
@@ -58,7 +59,7 @@ export const booksApi = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${API_URL}/api/books`, {
+    const response = await fetch(`${API_URL}/books`, {
       method: 'POST',
       body: formData,
     });
@@ -66,7 +67,7 @@ export const booksApi = {
   },
 
   async update(id: string, data: Partial<Book>): Promise<Book> {
-    const response = await fetch(`${API_URL}/api/books/${id}`, {
+    const response = await fetch(`${API_URL}/books/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -75,30 +76,30 @@ export const booksApi = {
   },
 
   async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_URL}/api/books/${id}`, {
+    const response = await fetch(`${API_URL}/books/${id}`, {
       method: 'DELETE',
     });
     return handleResponse<void>(response);
   },
 
   getPdfUrl(id: string): string {
-    return `${API_URL}/api/books/${id}/pdf`;
+    return `${API_URL}/books/${id}/pdf`;
   },
 
   getThumbnailUrl(id: string): string {
-    return `${API_URL}/api/books/${id}/thumbnail`;
+    return `${API_URL}/books/${id}/thumbnail`;
   },
 };
 
 // Progress API
 export const progressApi = {
   async get(bookId: string): Promise<BookProgress> {
-    const response = await fetch(`${API_URL}/api/books/${bookId}/progress`);
+    const response = await fetch(`${API_URL}/books/${bookId}/progress`);
     return handleResponse<BookProgress>(response);
   },
 
   async update(bookId: string, progress: Partial<BookProgress>): Promise<BookProgress> {
-    const response = await fetch(`${API_URL}/api/books/${bookId}/progress`, {
+    const response = await fetch(`${API_URL}/books/${bookId}/progress`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(progress),
@@ -111,12 +112,12 @@ export const progressApi = {
 export const notesApi = {
   async list(bookId: string, sortBy?: 'page' | 'date'): Promise<Note[]> {
     const queryParams = sortBy ? `?sortBy=${sortBy}` : '';
-    const response = await fetch(`${API_URL}/api/books/${bookId}/notes${queryParams}`);
+    const response = await fetch(`${API_URL}/books/${bookId}/notes${queryParams}`);
     return handleResponse<Note[]>(response);
   },
 
   async create(bookId: string, note: CreateNoteRequest): Promise<Note> {
-    const response = await fetch(`${API_URL}/api/books/${bookId}/notes`, {
+    const response = await fetch(`${API_URL}/books/${bookId}/notes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(note),
@@ -125,7 +126,7 @@ export const notesApi = {
   },
 
   async update(noteId: string, updates: UpdateNoteRequest): Promise<Note> {
-    const response = await fetch(`${API_URL}/api/notes/${noteId}`, {
+    const response = await fetch(`${API_URL}/notes/${noteId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
@@ -134,14 +135,14 @@ export const notesApi = {
   },
 
   async delete(noteId: string): Promise<void> {
-    const response = await fetch(`${API_URL}/api/notes/${noteId}`, {
+    const response = await fetch(`${API_URL}/notes/${noteId}`, {
       method: 'DELETE',
     });
     return handleResponse<void>(response);
   },
 
   async export(bookId: string): Promise<Blob> {
-    const response = await fetch(`${API_URL}/api/books/${bookId}/notes/export`);
+    const response = await fetch(`${API_URL}/books/${bookId}/notes/export`);
     if (!response.ok) {
       throw new ApiError(response.status, 'Failed to export notes');
     }
@@ -152,12 +153,12 @@ export const notesApi = {
 // Preferences API
 export const preferencesApi = {
   async get(): Promise<Preferences> {
-    const response = await fetch(`${API_URL}/api/preferences`);
+    const response = await fetch(`${API_URL}/preferences`);
     return handleResponse<Preferences>(response);
   },
 
   async update(preferences: UpdatePreferencesRequest): Promise<Preferences> {
-    const response = await fetch(`${API_URL}/api/preferences`, {
+    const response = await fetch(`${API_URL}/preferences`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(preferences),
@@ -173,7 +174,7 @@ export const googleBooksApi = {
     if (title) queryParams.append('title', title);
     if (author) queryParams.append('author', author);
 
-    const response = await fetch(`${API_URL}/api/books/lookup?${queryParams}`);
+    const response = await fetch(`${API_URL}/books/lookup?${queryParams}`);
     return handleResponse<GoogleBooksCandidate[]>(response);
   },
 };
@@ -181,7 +182,7 @@ export const googleBooksApi = {
 // Export/Import API
 export const libraryApi = {
   async export(): Promise<Blob> {
-    const response = await fetch(`${API_URL}/api/export`);
+    const response = await fetch(`${API_URL}/export`);
     if (!response.ok) {
       throw new ApiError(response.status, 'Failed to export library');
     }
@@ -189,7 +190,7 @@ export const libraryApi = {
   },
 
   async import(data: LibraryExport): Promise<void> {
-    const response = await fetch(`${API_URL}/api/import`, {
+    const response = await fetch(`${API_URL}/import`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
