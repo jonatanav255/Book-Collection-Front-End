@@ -153,14 +153,16 @@ export function PDFViewer({
   }
 
   return (
-    <div className="flex items-center justify-center w-full h-full overflow-auto bg-gray-100 dark:bg-gray-950 p-4">
-      <canvas
-        ref={canvasRef}
-        className="shadow-2xl max-w-full h-auto"
-        style={{
-          filter: 'var(--pdf-filter, none)',
-        }}
-      />
+    <div className="w-full h-full overflow-auto bg-gray-100 dark:bg-gray-950 p-4">
+      <div className="flex items-center justify-center min-w-full min-h-full">
+        <canvas
+          ref={canvasRef}
+          className="shadow-2xl"
+          style={{
+            filter: 'var(--pdf-filter, none)',
+          }}
+        />
+      </div>
     </div>
   );
 }
