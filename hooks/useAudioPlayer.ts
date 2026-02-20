@@ -24,6 +24,7 @@ export function useAudioPlayer({
   const currentPageRef = useRef<number>(currentPage);
   const currentBookIdRef = useRef<string | null>(bookId);
   const isLoadingRef = useRef<boolean>(false);
+  const shouldContinuePlayingRef = useRef<boolean>(false);
 
   // Update refs when props change
   useEffect(() => {
@@ -90,6 +91,8 @@ export function useAudioPlayer({
 
         // Set up event listeners
         audio.onended = () => {
+          // Keep playing flag true for auto-advance
+          shouldContinuePlayingRef.current = true;
           setIsPlaying(false);
           setIsPaused(false);
           isLoadingRef.current = false;
@@ -166,6 +169,7 @@ export function useAudioPlayer({
       audioRef.current.currentTime = 0;
       setIsPlaying(false);
       setIsPaused(false);
+      shouldContinuePlayingRef.current = false;
     }
   }, []);
 
@@ -179,7 +183,13 @@ export function useAudioPlayer({
 
   // When page changes while playing, load new page audio
   useEffect(() => {
-    if (isPlaying && !isPaused) {
+    // Auto-advance: play next page after previous finished
+    if (shouldContinuePlayingRef.current) {
+      shouldContinuePlayingRef.current = false;
+      loadAndPlayAudio(currentPage);
+    }
+    // Manual page change while playing: continue playing new page
+    else if (isPlaying && !isPaused) {
       loadAndPlayAudio(currentPage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
