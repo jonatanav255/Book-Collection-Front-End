@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Sun, Moon, FileText, Trees, Waves } from 'lucide-react';
+import { Sun, Moon, FileText } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { ThemePreset, FontSize } from '@/types';
 
@@ -9,11 +9,9 @@ export function ThemeSelector() {
   const { theme, fontSize, fontFamily, setTheme, setFontSize, setFontFamily } = useTheme();
 
   const themes = [
-    { value: ThemePreset.LIGHT, label: 'Light', icon: Sun, color: 'bg-white border-gray-300' },
-    { value: ThemePreset.DARK, label: 'Dark', icon: Moon, color: 'bg-gray-900 border-gray-700' },
-    { value: ThemePreset.SEPIA, label: 'Sepia', icon: FileText, color: 'bg-amber-50 border-amber-200' },
-    { value: ThemePreset.FOREST, label: 'Forest', icon: Trees, color: 'bg-green-50 border-green-200' },
-    { value: ThemePreset.OCEAN, label: 'Ocean', icon: Waves, color: 'bg-blue-50 border-blue-200' },
+    { value: ThemePreset.LIGHT, label: 'Light', icon: Sun, color: 'bg-white border-gray-300 text-gray-900' },
+    { value: ThemePreset.DARK, label: 'Dark', icon: Moon, color: 'bg-slate-900 border-slate-700 text-slate-100' },
+    { value: ThemePreset.READING, label: 'Reading', icon: FileText, color: 'bg-neutral-100 border-neutral-300 text-neutral-800' },
   ];
 
   const fontSizes = [
@@ -37,7 +35,7 @@ export function ThemeSelector() {
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
           Theme
         </h3>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-3 gap-3">
           {themes.map((t) => {
             const Icon = t.icon;
             const isActive = theme === t.value;

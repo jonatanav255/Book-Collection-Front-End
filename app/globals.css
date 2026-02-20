@@ -7,6 +7,10 @@
   --font-size: 16px;
   --background: #ffffff;
   --foreground: #171717;
+  --background-secondary: #f9fafb;
+  --border-color: #e5e7eb;
+  --icon-color: #1f2937;
+  --icon-color-secondary: #3b82f6;
   --pdf-filter: none;
 }
 
@@ -27,51 +31,71 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Apply font size to all text elements */
+* {
+  font-family: inherit;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Theme-aware utility classes */
+  .bg-theme {
+    background-color: var(--background);
+  }
+
+  .bg-theme-secondary {
+    background-color: var(--background-secondary);
+  }
+
+  .text-theme {
+    color: var(--foreground);
+  }
+
+  .border-theme {
+    border-color: var(--border-color);
+  }
+
+  .text-icon {
+    color: var(--icon-color);
+  }
+
+  .text-icon-secondary {
+    color: var(--icon-color-secondary);
   }
 }
 
 /* Theme-specific styles */
 .theme-light {
   --background: #ffffff;
-  --foreground: #171717;
-  --icon-color: #1f2937; /* gray-800 */
-  --icon-color-secondary: #3b82f6; /* blue-500 */
+  --foreground: #111827;
+  --background-secondary: #f9fafb;
+  --border-color: #e5e7eb;
+  --icon-color: #374151;
+  --icon-color-secondary: #3b82f6;
   --pdf-filter: none;
 }
 
 .theme-dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --icon-color: #e5e7eb; /* gray-200 */
+  --background: #0f172a; /* slate-900 */
+  --foreground: #f1f5f9; /* slate-100 */
+  --background-secondary: #1e293b; /* slate-800 */
+  --border-color: #334155; /* slate-700 */
+  --icon-color: #cbd5e1; /* slate-300 */
   --icon-color-secondary: #60a5fa; /* blue-400 */
-  --pdf-filter: invert(1) hue-rotate(180deg);
+  --pdf-filter: invert(0.9) hue-rotate(180deg);
 }
 
-.theme-sepia {
-  --background: #f4ecd8;
-  --foreground: #5b4636;
-  --icon-color: #78350f; /* brown-900 */
-  --icon-color-secondary: #92400e; /* amber-800 */
-  --pdf-filter: sepia(0.5) brightness(1.1);
-}
-
-.theme-forest {
-  --background: #e8f5e9;
-  --foreground: #1b5e20;
-  --icon-color: #14532d; /* green-900 */
-  --icon-color-secondary: #15803d; /* green-700 */
-  --pdf-filter: sepia(0.2) hue-rotate(60deg) brightness(1.05);
-}
-
-.theme-ocean {
-  --background: #e3f2fd;
-  --foreground: #0d47a1;
-  --icon-color: #1e3a8a; /* blue-900 */
-  --icon-color-secondary: #1d4ed8; /* blue-700 */
-  --pdf-filter: sepia(0.2) hue-rotate(180deg) brightness(1.05);
+.theme-reading {
+  --background: #f5f5f5; /* neutral-100 - soft gray */
+  --foreground: #262626; /* neutral-800 - dark gray for text */
+  --background-secondary: #e5e5e5; /* neutral-200 */
+  --border-color: #d4d4d4; /* neutral-300 */
+  --icon-color: #525252; /* neutral-600 */
+  --icon-color-secondary: #737373; /* neutral-500 */
+  --pdf-filter: brightness(0.98) contrast(1.1); /* slight reduction in brightness, better contrast */
 }
 
 /* Animation for toast */

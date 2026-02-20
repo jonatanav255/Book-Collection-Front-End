@@ -44,7 +44,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const root = document.documentElement;
 
     // Remove all theme classes
-    root.classList.remove('theme-light', 'theme-dark', 'theme-sepia', 'theme-forest', 'theme-ocean');
+    root.classList.remove('theme-light', 'theme-dark', 'theme-reading');
 
     // Add current theme class
     root.classList.add(`theme-${preferences.theme}`);

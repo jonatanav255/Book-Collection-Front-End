@@ -66,9 +66,7 @@ export interface UpdateNoteRequest {
 export enum ThemePreset {
   LIGHT = 'light',
   DARK = 'dark',
-  SEPIA = 'sepia',
-  FOREST = 'forest',
-  OCEAN = 'ocean',
+  READING = 'reading',
 }
 
 export enum FontSize {
