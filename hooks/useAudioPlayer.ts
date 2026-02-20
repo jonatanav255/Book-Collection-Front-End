@@ -23,6 +23,7 @@ export function useAudioPlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentPageRef = useRef<number>(currentPage);
   const currentBookIdRef = useRef<string | null>(bookId);
+  const isLoadingRef = useRef<boolean>(false);
 
   // Update refs when props change
   useEffect(() => {
@@ -60,12 +61,20 @@ export function useAudioPlayer({
 
   const loadAndPlayAudio = useCallback(
     async (pageNumber: number) => {
-      if (!bookId) {
+      const currentBookId = currentBookIdRef.current;
+
+      if (!currentBookId) {
         setError('No book selected');
         return;
       }
 
+      // Prevent duplicate requests
+      if (isLoadingRef.current) {
+        return;
+      }
+
       try {
+        isLoadingRef.current = true;
         setIsLoading(true);
         setError(null);
 
@@ -83,6 +92,7 @@ export function useAudioPlayer({
         audio.onended = () => {
           setIsPlaying(false);
           setIsPaused(false);
+          isLoadingRef.current = false;
           onPageComplete?.();
         };
 
@@ -92,11 +102,13 @@ export function useAudioPlayer({
           setIsPlaying(false);
           setIsPaused(false);
           setIsLoading(false);
+          isLoadingRef.current = false;
           onError?.(new Error(errorMsg));
         };
 
         audio.oncanplay = () => {
           setIsLoading(false);
+          isLoadingRef.current = false;
         };
 
         audio.onplay = () => {
@@ -111,7 +123,7 @@ export function useAudioPlayer({
         };
 
         // Load audio URL (backend handles cache/generation)
-        audio.src = audioApi.getPageAudioUrl(bookId, pageNumber);
+        audio.src = audioApi.getPageAudioUrl(currentBookId, pageNumber);
 
         // Start playing
         await audio.play();
@@ -121,10 +133,11 @@ export function useAudioPlayer({
         setIsPlaying(false);
         setIsPaused(false);
         setIsLoading(false);
+        isLoadingRef.current = false;
         onError?.(err instanceof Error ? err : new Error(errorMsg));
       }
     },
-    [bookId, onPageComplete, onError]
+    [onPageComplete, onError]
   );
 
   const play = useCallback(() => {
@@ -166,10 +179,11 @@ export function useAudioPlayer({
 
   // When page changes while playing, load new page audio
   useEffect(() => {
-    if (isPlaying && !isPaused && bookId) {
+    if (isPlaying && !isPaused) {
       loadAndPlayAudio(currentPage);
     }
-  }, [currentPage, bookId, isPlaying, isPaused, loadAndPlayAudio]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   return {
     isPlaying,
