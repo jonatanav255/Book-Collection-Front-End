@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useBook } from '@/hooks/useBooks';
 import { useProgress } from '@/hooks/useProgress';
 import { useNotes } from '@/hooks/useNotes';
-import { useReadAloud } from '@/hooks/useReadAloud';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useToast } from '@/components/common/Toast';
 import { PDFViewer } from '@/components/reader/PDFViewer';
 import { ReaderControls } from '@/components/reader/ReaderControls';
@@ -38,31 +38,32 @@ export default function ReaderPage() {
   const [showNotes, setShowNotes] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showReadAloud, setShowReadAloud] = useState(false);
-  const [currentPageText, setCurrentPageText] = useState('');
 
   const { showToast } = useToast();
 
+  // Audio player for Google Cloud TTS
   const {
     isPlaying,
     isPaused,
-    speed,
-    voice,
-    voices,
-    speak,
-    pause,
-    resume,
+    isLoading: audioLoading,
+    isCached,
+    error: audioError,
+    togglePlayPause,
     stop,
-    changeSpeed,
-    changeVoice,
-  } = useReadAloud({
+  } = useAudioPlayer({
+    bookId,
+    currentPage,
     onPageComplete: () => {
-      // Auto-advance to next page when reading completes
+      // Auto-advance to next page when audio completes
       if (currentPage < totalPages) {
         handlePageChange(currentPage + 1);
       } else {
         stop();
         showToast('Finished reading the book!', 'success');
       }
+    },
+    onError: (error) => {
+      showToast(error.message || 'Failed to play audio', 'error');
     },
   });
 
@@ -78,18 +79,9 @@ export default function ReaderPage() {
     (page: number) => {
       setCurrentPageState(page);
       setCurrentPage(page);
-
-      // If read aloud is playing, start reading the new page
-      if (isPlaying && !isPaused) {
-        // Give a small delay for text extraction
-        setTimeout(() => {
-          if (currentPageText) {
-            speak(currentPageText);
-          }
-        }, 500);
-      }
+      // Note: Audio player automatically handles loading new page audio via useEffect
     },
-    [setCurrentPage, isPlaying, isPaused, speak, currentPageText]
+    [setCurrentPage]
   );
 
   // Keyboard shortcuts
@@ -133,9 +125,6 @@ export default function ReaderPage() {
   // Read aloud handling
   const handleToggleReadAloud = () => {
     setShowReadAloud(!showReadAloud);
-    if (!showReadAloud && currentPageText && !isPlaying) {
-      speak(currentPageText);
-    }
   };
 
   const handleCreateNote = async (note: CreateNoteRequest) => {
@@ -208,24 +197,19 @@ export default function ReaderPage() {
           scale={scale}
           onPageChange={handlePageChange}
           onTotalPagesLoad={setTotalPages}
-          onTextExtract={setCurrentPageText}
         />
 
         {/* Read Aloud Controls Overlay */}
         {showReadAloud && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-2xl px-4">
             <ReadAloudControls
               isPlaying={isPlaying}
               isPaused={isPaused}
-              speed={speed}
-              voice={voice}
-              voices={voices}
-              onPlay={() => speak(currentPageText)}
-              onPause={pause}
-              onResume={resume}
+              isLoading={audioLoading}
+              isCached={isCached}
+              error={audioError}
+              onTogglePlayPause={togglePlayPause}
               onStop={stop}
-              onSpeedChange={changeSpeed}
-              onVoiceChange={changeVoice}
             />
           </div>
         )}
