@@ -11,6 +11,7 @@ import {
   StickyNote,
   Volume2,
   Settings,
+  BookOpen,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -23,8 +24,12 @@ interface ReaderControlsProps {
   onToggleFullscreen: () => void;
   onToggleNotes: () => void;
   onToggleReadAloud: () => void;
+  onToggleReadAlong?: () => void;
   onToggleSettings: () => void;
   isFullscreen: boolean;
+  showReadAlong?: boolean;
+  bookTitle?: string;
+  bookAuthor?: string;
 }
 
 export function ReaderControls({
@@ -36,8 +41,12 @@ export function ReaderControls({
   onToggleFullscreen,
   onToggleNotes,
   onToggleReadAloud,
+  onToggleReadAlong,
   onToggleSettings,
   isFullscreen,
+  showReadAlong,
+  bookTitle,
+  bookAuthor,
 }: ReaderControlsProps) {
   const [pageInput, setPageInput] = useState(currentPage.toString());
 
@@ -94,6 +103,22 @@ export function ReaderControls({
               <Home className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </Link>
           )}
+
+          {/* Book Title & Author */}
+          {bookTitle && !isFullscreen && (
+            <div className="border-l border-gray-300 dark:border-gray-700 pl-3 max-w-xs">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                {bookTitle}
+              </h2>
+              {bookAuthor && (
+                <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                  {bookAuthor}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="border-l border-gray-300 dark:border-gray-700 pl-3" />
 
           <button
             onClick={handlePrevPage}
@@ -164,6 +189,20 @@ export function ReaderControls({
           >
             <Volume2 className="w-5 h-5" />
           </button>
+
+          {onToggleReadAlong && (
+            <button
+              onClick={onToggleReadAlong}
+              className={`p-2 rounded-lg transition-colors ${
+                showReadAlong
+                  ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+              title="Read-Along Mode"
+            >
+              <BookOpen className="w-5 h-5" />
+            </button>
+          )}
 
           <button
             onClick={onToggleNotes}

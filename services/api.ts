@@ -247,6 +247,61 @@ export const audioApi = {
     });
     return handleResponse(response);
   },
+
+  /**
+   * Start batch audio generation for all pages
+   * @param bookId - Book UUID
+   */
+  async startBatchGeneration(bookId: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_URL}/books/${bookId}/audio/generate-all`, {
+      method: 'POST',
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Get batch generation status
+   * @param bookId - Book UUID
+   */
+  async getBatchGenerationStatus(bookId: string): Promise<{
+    status: 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    currentPage: number;
+    totalPages: number;
+    progressPercentage: number;
+    errorMessage?: string;
+  }> {
+    const response = await fetch(`${API_URL}/books/${bookId}/audio/generation-status`);
+    return handleResponse(response);
+  },
+
+  /**
+   * Cancel batch audio generation
+   * @param bookId - Book UUID
+   */
+  async cancelBatchGeneration(bookId: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_URL}/books/${bookId}/audio/generation`, {
+      method: 'DELETE',
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Get page text with word-level timings for read-along
+   * @param bookId - Book UUID
+   * @param pageNumber - Page number (1-indexed)
+   */
+  async getPageTextWithTimings(bookId: string, pageNumber: number): Promise<{
+    text: string;
+    audioUrl: string;
+    wordTimings: Array<{
+      word: string;
+      startTime: number;
+      endTime: number;
+    }>;
+  }> {
+    const response = await fetch(`${API_URL}/books/${bookId}/pages/${pageNumber}/text-with-timings`);
+    return handleResponse(response);
+  },
 };
 
 export { ApiError };

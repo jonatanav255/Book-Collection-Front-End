@@ -6,16 +6,21 @@ import { useBook } from '@/hooks/useBooks';
 import { useProgress } from '@/hooks/useProgress';
 import { useNotes } from '@/hooks/useNotes';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { useBookSearch } from '@/hooks/useBookSearch';
 import { useToast } from '@/components/common/Toast';
 import { PDFViewer } from '@/components/reader/PDFViewer';
 import { ReaderControls } from '@/components/reader/ReaderControls';
 import { NotesPanel } from '@/components/notes/NotesPanel';
 import { ReadAloudControls } from '@/components/readaloud/ReadAloudControls';
+import { ReadAlongPlayer } from '@/components/readaloud/ReadAlongPlayer';
+import { BatchAudioGenerator } from '@/components/library/BatchAudioGenerator';
+import { SearchBar } from '@/components/reader/SearchBar';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { Modal } from '@/components/common/Modal';
 import { Loading } from '@/components/common/Loading';
 import { booksApi } from '@/services/api';
 import { CreateNoteRequest } from '@/types';
+import * as pdfjs from 'pdfjs-dist';
 
 export default function ReaderPage() {
   const params = useParams();
@@ -38,8 +43,61 @@ export default function ReaderPage() {
   const [showNotes, setShowNotes] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showReadAloud, setShowReadAloud] = useState(false);
+  const [showReadAlong, setShowReadAlong] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [pdfDoc, setPdfDoc] = useState<pdfjs.PDFDocumentProxy | null>(null);
 
   const { showToast } = useToast();
+
+  // Handle page change
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setCurrentPageState(page);
+      setCurrentPage(page);
+      // Note: Audio player automatically handles loading new page audio via useEffect
+    },
+    [setCurrentPage]
+  );
+
+  // Book search functionality
+  const {
+    currentMatchIndex,
+    totalMatches,
+    nextMatch,
+    previousMatch,
+  } = useBookSearch({
+    pdfDoc,
+    searchText,
+    currentPage,
+    onPageChange: handlePageChange,
+  });
+
+  // Load PDF document for search
+  useEffect(() => {
+    if (!book) return;
+
+    let isMounted = true;
+    const pdfUrl = booksApi.getPdfUrl(bookId);
+
+    const loadPdf = async () => {
+      try {
+        const loadingTask = pdfjs.getDocument(pdfUrl);
+        const pdf = await loadingTask.promise;
+        if (isMounted) {
+          setPdfDoc(pdf);
+        }
+      } catch (error) {
+        console.error('Failed to load PDF for search:', error);
+      }
+    };
+
+    loadPdf();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [book, bookId]);
 
   // Audio player for Google Cloud TTS
   const {
@@ -75,20 +133,20 @@ export default function ReaderPage() {
     }
   }, [progress]);
 
-  // Handle page change
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setCurrentPageState(page);
-      setCurrentPage(page);
-      // Note: Audio player automatically handles loading new page audio via useEffect
-    },
-    [setCurrentPage]
-  );
-
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      // Don't interfere with input fields (unless it's Cmd/Ctrl+F)
+      const isInputField = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
+
+      // Handle Cmd/Ctrl+F for search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        setShowSearch(true);
+        return;
+      }
+
+      if (isInputField) {
         return;
       }
 
@@ -103,6 +161,9 @@ export default function ReaderPage() {
           if (isFullscreen) {
             document.exitFullscreen?.();
             setIsFullscreen(false);
+          } else if (showSearch) {
+            setShowSearch(false);
+            setSearchText('');
           }
           break;
       }
@@ -110,7 +171,7 @@ export default function ReaderPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentPage, totalPages, isFullscreen, handlePageChange]);
+  }, [currentPage, totalPages, isFullscreen, showSearch, handlePageChange]);
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -186,33 +247,69 @@ export default function ReaderPage() {
         onToggleFullscreen={toggleFullscreen}
         onToggleNotes={() => setShowNotes(!showNotes)}
         onToggleReadAloud={handleToggleReadAloud}
+        onToggleReadAlong={() => setShowReadAlong(!showReadAlong)}
         onToggleSettings={() => setShowSettings(!showSettings)}
         isFullscreen={isFullscreen}
+        showReadAlong={showReadAlong}
+        bookTitle={book.title}
+        bookAuthor={book.author}
       />
 
-      {/* PDF Viewer */}
+      {/* Main Content Area */}
       <div className="flex-1 overflow-hidden relative">
-        <PDFViewer
-          pdfUrl={pdfUrl}
-          pageNumber={currentPage}
-          scale={scale}
-          onPageChange={handlePageChange}
-          onTotalPagesLoad={setTotalPages}
-        />
-
-        {/* Read Aloud Controls Overlay */}
-        {showReadAloud && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-2xl px-4">
-            <ReadAloudControls
-              isPlaying={isPlaying}
-              isPaused={isPaused}
-              isLoading={audioLoading}
-              isCached={isCached}
-              error={audioError}
-              onTogglePlayPause={togglePlayPause}
-              onStop={stop}
+        {showReadAlong ? (
+          /* Read-Along Mode with Word Highlighting */
+          <div className="h-full p-4">
+            <ReadAlongPlayer
+              bookId={bookId}
+              pageNumber={currentPage}
+              onPageChange={handlePageChange}
+              totalPages={totalPages}
             />
           </div>
+        ) : (
+          /* PDF Viewer Mode */
+          <>
+            <PDFViewer
+              pdfUrl={pdfUrl}
+              pageNumber={currentPage}
+              scale={scale}
+              onPageChange={handlePageChange}
+              onTotalPagesLoad={setTotalPages}
+              searchText={searchText}
+              currentSearchIndex={currentMatchIndex}
+            />
+
+            {/* Search Bar */}
+            <SearchBar
+              searchText={searchText}
+              onSearchChange={setSearchText}
+              currentIndex={currentMatchIndex}
+              totalResults={totalMatches}
+              onNext={nextMatch}
+              onPrevious={previousMatch}
+              onClose={() => {
+                setShowSearch(false);
+                setSearchText('');
+              }}
+              isOpen={showSearch}
+            />
+
+            {/* Read Aloud Controls Overlay */}
+            {showReadAloud && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-2xl px-4">
+                <ReadAloudControls
+                  isPlaying={isPlaying}
+                  isPaused={isPaused}
+                  isLoading={audioLoading}
+                  isCached={isCached}
+                  error={audioError}
+                  onTogglePlayPause={togglePlayPause}
+                  onStop={stop}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -235,7 +332,16 @@ export default function ReaderPage() {
         title="Reading Preferences"
         size="lg"
       >
-        <ThemeSelector />
+        <div className="space-y-6">
+          <ThemeSelector />
+
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <BatchAudioGenerator
+              bookId={bookId}
+              onComplete={() => showToast('All audio generated successfully!', 'success')}
+            />
+          </div>
+        </div>
       </Modal>
     </div>
   );

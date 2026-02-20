@@ -16,6 +16,8 @@ interface PDFViewerProps {
   onPageChange: (page: number) => void;
   onTotalPagesLoad: (total: number) => void;
   onTextExtract?: (text: string) => void;
+  searchText?: string;
+  currentSearchIndex?: number;
 }
 
 export function PDFViewer({
@@ -25,8 +27,12 @@ export function PDFViewer({
   onPageChange,
   onTotalPagesLoad,
   onTextExtract,
+  searchText,
+  currentSearchIndex,
 }: PDFViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const textLayerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [pdfDoc, setPdfDoc] = useState<pdfjs.PDFDocumentProxy | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +72,7 @@ export function PDFViewer({
 
   // Render current page
   useEffect(() => {
-    if (!pdfDoc || !canvasRef.current) return;
+    if (!pdfDoc || !canvasRef.current || !textLayerRef.current) return;
 
     let isMounted = true;
 
@@ -83,8 +89,9 @@ export function PDFViewer({
 
         const viewport = page.getViewport({ scale });
         const canvas = canvasRef.current;
+        const textLayerDiv = textLayerRef.current;
 
-        if (!canvas) return;
+        if (!canvas || !textLayerDiv) return;
 
         const context = canvas.getContext('2d');
         if (!context) return;
@@ -108,14 +115,79 @@ export function PDFViewer({
         await renderTaskRef.current.promise;
         renderTaskRef.current = null;
 
-        // Extract text if callback provided
+        // Clear previous text layer
+        textLayerDiv.innerHTML = '';
+        textLayerDiv.style.width = `${viewport.width}px`;
+        textLayerDiv.style.height = `${viewport.height}px`;
+
+        // Render text layer for selection and search
+        const textContent = await page.getTextContent();
+
+        // Extract text for callback if provided
         if (onTextExtract) {
-          const textContent = await page.getTextContent();
           const text = textContent.items
             .map((item: any) => item.str)
             .join(' ');
           onTextExtract(text);
         }
+
+        // Render text layer items
+        let currentPageMatchIndex = 0;
+        textContent.items.forEach((item: any) => {
+          const tx = pdfjs.Util.transform(viewport.transform, item.transform);
+          const fontSize = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]);
+
+          const textDiv = document.createElement('div');
+          textDiv.style.position = 'absolute';
+          textDiv.style.left = `${tx[4]}px`;
+          textDiv.style.top = `${tx[5] - fontSize}px`;
+          textDiv.style.fontSize = `${fontSize}px`;
+          textDiv.style.fontFamily = item.fontName || 'sans-serif';
+
+          // Handle search highlighting
+          if (searchText && searchText.trim().length > 0) {
+            const itemText = item.str || '';
+            const searchLower = searchText.toLowerCase();
+            const itemLower = itemText.toLowerCase();
+
+            if (itemLower.includes(searchLower)) {
+              // Split text to highlight matches
+              const parts: string[] = [];
+              let lastIndex = 0;
+              let index = itemLower.indexOf(searchLower);
+
+              while (index !== -1) {
+                // Add text before match
+                if (index > lastIndex) {
+                  parts.push(itemText.substring(lastIndex, index));
+                }
+
+                // Add highlighted match
+                const matchSpan = document.createElement('span');
+                matchSpan.className = 'search-highlight';
+                matchSpan.textContent = itemText.substring(index, index + searchText.length);
+                textDiv.appendChild(document.createTextNode(parts.join('')));
+                parts.length = 0;
+                textDiv.appendChild(matchSpan);
+
+                lastIndex = index + searchText.length;
+                index = itemLower.indexOf(searchLower, lastIndex);
+                currentPageMatchIndex++;
+              }
+
+              // Add remaining text
+              if (lastIndex < itemText.length) {
+                textDiv.appendChild(document.createTextNode(itemText.substring(lastIndex)));
+              }
+            } else {
+              textDiv.textContent = item.str;
+            }
+          } else {
+            textDiv.textContent = item.str;
+          }
+
+          textLayerDiv.appendChild(textDiv);
+        });
       } catch (err: any) {
         if (err?.name !== 'RenderingCancelledException') {
           console.error('Error rendering page:', err);
@@ -131,7 +203,7 @@ export function PDFViewer({
         renderTaskRef.current.cancel();
       }
     };
-  }, [pdfDoc, pageNumber, scale, onTextExtract]);
+  }, [pdfDoc, pageNumber, scale, onTextExtract, searchText]);
 
   if (loading) {
     return (
@@ -155,13 +227,27 @@ export function PDFViewer({
   return (
     <div className="w-full h-full overflow-auto bg-gray-100 dark:bg-gray-950 p-4">
       <div className="flex items-center justify-center min-w-full min-h-full">
-        <canvas
-          ref={canvasRef}
-          className="shadow-2xl"
-          style={{
-            filter: 'var(--pdf-filter, none)',
-          }}
-        />
+        <div ref={containerRef} className="relative">
+          <canvas
+            ref={canvasRef}
+            className="shadow-2xl"
+            style={{
+              filter: 'var(--pdf-filter, none)',
+            }}
+          />
+          <div
+            ref={textLayerRef}
+            className="pdf-text-layer"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              overflow: 'hidden',
+              opacity: 0.2,
+              lineHeight: 1,
+            }}
+          />
+        </div>
       </div>
     </div>
   );

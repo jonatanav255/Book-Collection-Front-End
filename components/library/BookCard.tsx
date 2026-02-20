@@ -56,18 +56,18 @@ export function BookCard({ book, onDelete }: BookCardProps) {
         </Link>
 
         {/* Book Info */}
-        <div className="p-4">
+        <div className="p-4 h-[140px] flex flex-col">
           <Link href={`/reader/${book.id}`}>
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 mb-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 mb-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors min-h-[48px]">
               {book.title}
             </h3>
           </Link>
-          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1 mb-2">
+          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1 mb-2 min-h-[20px]">
             {book.author}
           </p>
 
           {/* Status Badge */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mt-auto">
             <span
               className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
                 book.status === 'FINISHED'

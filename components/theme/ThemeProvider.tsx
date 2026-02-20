@@ -7,7 +7,7 @@ import type { Preferences } from '@/types';
 
 const DEFAULT_PREFERENCES: Preferences = {
   id: 'default',
-  theme: ThemePreset.LIGHT,
+  theme: ThemePreset.DARK,
   fontFamily: 'system-ui, -apple-system, sans-serif',
   fontSize: FontSize.MD,
   createdAt: new Date().toISOString(),
@@ -43,18 +43,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const root = document.documentElement;
 
-    // Remove all theme classes
-    root.classList.remove('theme-light', 'theme-dark', 'theme-reading');
-
-    // Add current theme class
-    root.classList.add(`theme-${preferences.theme}`);
-
-    // Apply dark mode if needed
-    if (preferences.theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    // Add dark theme classes
+    root.classList.add('theme-dark', 'dark');
 
     // Apply font family
     root.style.setProperty('--font-family', preferences.fontFamily);
