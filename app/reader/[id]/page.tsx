@@ -53,6 +53,7 @@ export default function ReaderPage() {
   } = useAudioPlayer({
     bookId,
     currentPage,
+    enabled: showReadAloud, // Only check cache status when Read Aloud is open
     onPageComplete: () => {
       // Auto-advance to next page when audio completes
       if (currentPage < totalPages) {

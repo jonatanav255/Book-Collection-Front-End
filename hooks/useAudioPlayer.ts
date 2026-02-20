@@ -4,6 +4,7 @@ import { audioApi } from '@/services/api';
 interface UseAudioPlayerOptions {
   bookId: string | null;
   currentPage: number;
+  enabled?: boolean; // Only check cache status when enabled
   onPageComplete?: () => void;
   onError?: (error: Error) => void;
 }
@@ -11,6 +12,7 @@ interface UseAudioPlayerOptions {
 export function useAudioPlayer({
   bookId,
   currentPage,
+  enabled = true,
   onPageComplete,
   onError,
 }: UseAudioPlayerOptions) {
@@ -32,9 +34,12 @@ export function useAudioPlayer({
     currentBookIdRef.current = bookId;
   }, [currentPage, bookId]);
 
-  // Check if audio is cached when page changes
+  // Check if audio is cached when page changes (only when enabled)
   useEffect(() => {
-    if (!bookId) return;
+    if (!bookId || !enabled) {
+      setIsCached(false);
+      return;
+    }
 
     const checkCache = async () => {
       try {
@@ -47,7 +52,7 @@ export function useAudioPlayer({
     };
 
     checkCache();
-  }, [bookId, currentPage]);
+  }, [bookId, currentPage, enabled]);
 
   // Cleanup audio when component unmounts or page changes
   useEffect(() => {
