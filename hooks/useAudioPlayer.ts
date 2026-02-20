@@ -58,6 +58,12 @@ export function useAudioPlayer({
   useEffect(() => {
     return () => {
       if (audioRef.current) {
+        // Remove event listeners before cleanup
+        audioRef.current.onended = null;
+        audioRef.current.onerror = null;
+        audioRef.current.oncanplay = null;
+        audioRef.current.onplay = null;
+        audioRef.current.onpause = null;
         audioRef.current.pause();
         audioRef.current.src = '';
         audioRef.current = null;
@@ -84,10 +90,17 @@ export function useAudioPlayer({
         setIsLoading(true);
         setError(null);
 
-        // Stop any existing audio
+        // Stop and cleanup any existing audio
         if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.src = '';
+          const oldAudio = audioRef.current;
+          // Remove event listeners to prevent old audio from triggering errors
+          oldAudio.onended = null;
+          oldAudio.onerror = null;
+          oldAudio.oncanplay = null;
+          oldAudio.onplay = null;
+          oldAudio.onpause = null;
+          oldAudio.pause();
+          oldAudio.src = '';
         }
 
         // Create new audio element
