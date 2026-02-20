@@ -100,6 +100,7 @@ export function useAudioPlayer({
           shouldContinuePlayingRef.current = true;
           setIsPlaying(false);
           setIsPaused(false);
+          setError(null); // Clear any previous errors
           isLoadingRef.current = false;
           onPageComplete?.();
         };
@@ -174,6 +175,7 @@ export function useAudioPlayer({
       audioRef.current.currentTime = 0;
       setIsPlaying(false);
       setIsPaused(false);
+      setError(null); // Clear errors when stopping
       shouldContinuePlayingRef.current = false;
     }
   }, []);
