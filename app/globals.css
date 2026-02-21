@@ -112,16 +112,23 @@ html {
   transform-origin: 0% 0%;
 }
 
-/* Text selection in PDF */
+/* Text selection in PDF - SUPER BLUE with fully opaque background */
 .pdf-text-layer ::selection {
-  background: rgba(59, 130, 246, 0.3); /* blue-500 with opacity */
+  background: #00A3FF;
+  color: #FFFFFF;
+  text-shadow: none;
+  -webkit-text-fill-color: #FFFFFF;
 }
 
 /* Search highlight in PDF */
 .pdf-text-layer .search-highlight {
-  background-color: rgba(250, 204, 21, 0.4); /* yellow-400 with opacity */
+  background-color: #FFD700;
+  color: #000000;
+  -webkit-text-fill-color: #000000;
 }
 
 .pdf-text-layer .search-highlight.current {
-  background-color: rgba(251, 146, 60, 0.5); /* orange-400 with opacity */
+  background-color: #FFA500;
+  color: #000000;
+  -webkit-text-fill-color: #000000;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useBook } from '@/hooks/useBooks';
 import { useProgress } from '@/hooks/useProgress';
@@ -12,10 +12,9 @@ import { PDFViewer } from '@/components/reader/PDFViewer';
 import { ReaderControls } from '@/components/reader/ReaderControls';
 import { NotesPanel } from '@/components/notes/NotesPanel';
 import { ReadAloudControls } from '@/components/readaloud/ReadAloudControls';
-import { ReadAlongPlayer } from '@/components/readaloud/ReadAlongPlayer';
-import { BatchAudioGenerator } from '@/components/library/BatchAudioGenerator';
 import { SearchBar } from '@/components/reader/SearchBar';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
+import { BatchAudioGenerator } from '@/components/audio/BatchAudioGenerator';
 import { Modal } from '@/components/common/Modal';
 import { Loading } from '@/components/common/Loading';
 import { booksApi } from '@/services/api';
@@ -43,7 +42,6 @@ export default function ReaderPage() {
   const [showNotes, setShowNotes] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showReadAloud, setShowReadAloud] = useState(false);
-  const [showReadAlong, setShowReadAlong] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [pdfDoc, setPdfDoc] = useState<pdfjs.PDFDocumentProxy | null>(null);
@@ -99,7 +97,7 @@ export default function ReaderPage() {
     };
   }, [book, bookId]);
 
-  // Audio player for Google Cloud TTS
+  // Audio player
   const {
     isPlaying,
     isPaused,
@@ -108,12 +106,12 @@ export default function ReaderPage() {
     error: audioError,
     togglePlayPause,
     stop,
+    audioElement,
   } = useAudioPlayer({
     bookId,
     currentPage,
-    enabled: showReadAloud, // Only check cache status when Read Aloud is open
+    enabled: showReadAloud,
     onPageComplete: () => {
-      // Auto-advance to next page when audio completes
       if (currentPage < totalPages) {
         handlePageChange(currentPage + 1);
       } else {
@@ -126,10 +124,12 @@ export default function ReaderPage() {
     },
   });
 
-  // Initialize current page from progress
+  // Initialize current page from progress (only once on mount)
+  const initializedRef = useRef(false);
   useEffect(() => {
-    if (progress) {
+    if (progress && !initializedRef.current) {
       setCurrentPageState(progress.currentPage || 1);
+      initializedRef.current = true;
     }
   }, [progress]);
 
@@ -247,69 +247,51 @@ export default function ReaderPage() {
         onToggleFullscreen={toggleFullscreen}
         onToggleNotes={() => setShowNotes(!showNotes)}
         onToggleReadAloud={handleToggleReadAloud}
-        onToggleReadAlong={() => setShowReadAlong(!showReadAlong)}
         onToggleSettings={() => setShowSettings(!showSettings)}
+        onToggleSearch={() => setShowSearch(!showSearch)}
         isFullscreen={isFullscreen}
-        showReadAlong={showReadAlong}
-        bookTitle={book.title}
-        bookAuthor={book.author}
       />
 
-      {/* Main Content Area */}
+      {/* PDF Viewer */}
       <div className="flex-1 overflow-hidden relative">
-        {showReadAlong ? (
-          /* Read-Along Mode with Word Highlighting */
-          <div className="h-full p-4">
-            <ReadAlongPlayer
-              bookId={bookId}
-              pageNumber={currentPage}
-              onPageChange={handlePageChange}
-              totalPages={totalPages}
+        <PDFViewer
+          pdfUrl={pdfUrl}
+          pageNumber={currentPage}
+          scale={scale}
+          onPageChange={handlePageChange}
+          onTotalPagesLoad={setTotalPages}
+          searchText={searchText}
+          currentSearchIndex={currentMatchIndex}
+        />
+
+        {/* Search Bar */}
+        <SearchBar
+          searchText={searchText}
+          onSearchChange={setSearchText}
+          currentIndex={currentMatchIndex}
+          totalResults={totalMatches}
+          onNext={nextMatch}
+          onPrevious={previousMatch}
+          onClose={() => {
+            setShowSearch(false);
+            setSearchText('');
+          }}
+          isOpen={showSearch}
+        />
+
+        {/* Read Aloud Controls Overlay */}
+        {showReadAloud && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-2xl px-4">
+            <ReadAloudControls
+              isPlaying={isPlaying}
+              isPaused={isPaused}
+              isLoading={audioLoading}
+              isCached={isCached}
+              error={audioError}
+              onTogglePlayPause={togglePlayPause}
+              onStop={stop}
             />
           </div>
-        ) : (
-          /* PDF Viewer Mode */
-          <>
-            <PDFViewer
-              pdfUrl={pdfUrl}
-              pageNumber={currentPage}
-              scale={scale}
-              onPageChange={handlePageChange}
-              onTotalPagesLoad={setTotalPages}
-              searchText={searchText}
-              currentSearchIndex={currentMatchIndex}
-            />
-
-            {/* Search Bar */}
-            <SearchBar
-              searchText={searchText}
-              onSearchChange={setSearchText}
-              currentIndex={currentMatchIndex}
-              totalResults={totalMatches}
-              onNext={nextMatch}
-              onPrevious={previousMatch}
-              onClose={() => {
-                setShowSearch(false);
-                setSearchText('');
-              }}
-              isOpen={showSearch}
-            />
-
-            {/* Read Aloud Controls Overlay */}
-            {showReadAloud && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-2xl px-4">
-                <ReadAloudControls
-                  isPlaying={isPlaying}
-                  isPaused={isPaused}
-                  isLoading={audioLoading}
-                  isCached={isCached}
-                  error={audioError}
-                  onTogglePlayPause={togglePlayPause}
-                  onStop={stop}
-                />
-              </div>
-            )}
-          </>
         )}
       </div>
 
@@ -333,12 +315,19 @@ export default function ReaderPage() {
         size="lg"
       >
         <div className="space-y-6">
-          <ThemeSelector />
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Theme</h3>
+            <ThemeSelector />
+          </div>
 
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+          <hr className="border-gray-200 dark:border-gray-700" />
+
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Audio</h3>
             <BatchAudioGenerator
               bookId={bookId}
-              onComplete={() => showToast('All audio generated successfully!', 'success')}
+              onComplete={() => showToast('Batch generation completed!', 'success')}
+              onError={(error) => showToast(error, 'error')}
             />
           </div>
         </div>

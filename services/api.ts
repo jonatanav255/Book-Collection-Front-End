@@ -249,11 +249,31 @@ export const audioApi = {
   },
 
   /**
-   * Start batch audio generation for all pages
+   * Start batch audio generation for all pages or a page range
    * @param bookId - Book UUID
+   * @param startPage - Optional start page (1-indexed)
+   * @param endPage - Optional end page (1-indexed)
    */
-  async startBatchGeneration(bookId: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_URL}/books/${bookId}/audio/generate-all`, {
+  async startBatchGeneration(
+    bookId: string,
+    startPage?: number,
+    endPage?: number
+  ): Promise<{ message: string }> {
+    let url = `${API_URL}/books/${bookId}/audio/generate-all`;
+
+    const params = new URLSearchParams();
+    if (startPage !== undefined && startPage > 0) {
+      params.append('startPage', startPage.toString());
+    }
+    if (endPage !== undefined && endPage > 0) {
+      params.append('endPage', endPage.toString());
+    }
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    const response = await fetch(url, {
       method: 'POST',
     });
     return handleResponse(response);

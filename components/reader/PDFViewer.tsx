@@ -132,7 +132,6 @@ export function PDFViewer({
         }
 
         // Render text layer items
-        let currentPageMatchIndex = 0;
         textContent.items.forEach((item: any) => {
           const tx = pdfjs.Util.transform(viewport.transform, item.transform);
           const fontSize = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]);
@@ -144,9 +143,10 @@ export function PDFViewer({
           textDiv.style.fontSize = `${fontSize}px`;
           textDiv.style.fontFamily = item.fontName || 'sans-serif';
 
+          const itemText = item.str || '';
+
           // Handle search highlighting
           if (searchText && searchText.trim().length > 0) {
-            const itemText = item.str || '';
             const searchLower = searchText.toLowerCase();
             const itemLower = itemText.toLowerCase();
 
@@ -172,7 +172,6 @@ export function PDFViewer({
 
                 lastIndex = index + searchText.length;
                 index = itemLower.indexOf(searchLower, lastIndex);
-                currentPageMatchIndex++;
               }
 
               // Add remaining text
@@ -180,10 +179,12 @@ export function PDFViewer({
                 textDiv.appendChild(document.createTextNode(itemText.substring(lastIndex)));
               }
             } else {
-              textDiv.textContent = item.str;
+              textDiv.textContent = itemText;
             }
-          } else {
-            textDiv.textContent = item.str;
+          }
+          // Default: just show text
+          else {
+            textDiv.textContent = itemText;
           }
 
           textLayerDiv.appendChild(textDiv);
@@ -243,7 +244,6 @@ export function PDFViewer({
               top: 0,
               left: 0,
               overflow: 'hidden',
-              opacity: 0.2,
               lineHeight: 1,
             }}
           />
