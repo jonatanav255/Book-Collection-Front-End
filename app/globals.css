@@ -143,3 +143,19 @@ html {
   color: #000000;
   -webkit-text-fill-color: #000000;
 }
+
+/* Markdown Code Blocks */
+.markdown-content pre {
+  margin: 0.5rem 0;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.markdown-content code {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.markdown-content pre code {
+  background: none !important;
+  padding: 0 !important;
+}

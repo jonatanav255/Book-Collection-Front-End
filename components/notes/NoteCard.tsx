@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Pin, Edit2, Trash2, MoreVertical } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { Note, NoteColor } from '@/types';
 import { formatDistanceToNow } from '@/utils/date';
 
@@ -53,6 +56,13 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
     [NoteColor.QUESTION]: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
     [NoteColor.SUMMARY]: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
     [NoteColor.QUOTE]: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  };
+
+  const codeBlockStyles = {
+    [NoteColor.IDEA]: { backgroundColor: '#2d3748', borderLeft: '4px solid #3b82f6' },
+    [NoteColor.QUESTION]: { backgroundColor: '#2d3748', borderLeft: '4px solid #eab308' },
+    [NoteColor.SUMMARY]: { backgroundColor: '#2d3748', borderLeft: '4px solid #10b981' },
+    [NoteColor.QUOTE]: { backgroundColor: '#2d3748', borderLeft: '4px solid #a855f7' },
   };
 
   return (
@@ -118,15 +128,56 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
       </div>
 
       {/* Content */}
-      <div
-        className="text-sm text-gray-800 dark:text-gray-200 mb-2 cursor-pointer pr-8"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className={`break-words ${isExpanded ? '' : 'line-clamp-3'}`}>
-          {note.content}
+      <div className="text-sm text-gray-800 dark:text-gray-200 mb-2 pr-8">
+        <div className={`break-words markdown-content ${isExpanded ? '' : 'line-clamp-3'}`}>
+          <ReactMarkdown
+            components={{
+              code({ node, inline, className, children, ...props }: any) {
+                const match = /language-(\w+)/.exec(className || '');
+                return !inline && match ? (
+                  <div style={codeBlockStyles[note.color]} className="rounded-lg overflow-hidden my-2">
+                    <SyntaxHighlighter
+                      style={vscDarkPlus}
+                      language={match[1]}
+                      PreTag="div"
+                      customStyle={{
+                        margin: 0,
+                        background: 'transparent',
+                        padding: '1rem',
+                      }}
+                      {...props}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  </div>
+                ) : (
+                  <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono" {...props}>
+                    {children}
+                  </code>
+                );
+              },
+              p: ({ children }) => <p className="mb-2">{children}</p>,
+              h1: ({ children }) => <h1 className="text-xl font-bold mb-2">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-lg font-bold mb-2">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-base font-bold mb-1">{children}</h3>,
+              ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
+              li: ({ children }) => <li className="mb-1">{children}</li>,
+              blockquote: ({ children }) => (
+                <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-3 italic my-2">
+                  {children}
+                </blockquote>
+              ),
+            }}
+          >
+            {note.content}
+          </ReactMarkdown>
         </div>
         {note.content.length > 150 && (
-          <button className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1"
+          >
             {isExpanded ? 'Show less' : 'Show more'}
           </button>
         )}
