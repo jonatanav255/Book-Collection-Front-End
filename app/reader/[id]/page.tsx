@@ -6,20 +6,17 @@ import { useBook } from '@/hooks/useBooks';
 import { useProgress } from '@/hooks/useProgress';
 import { useNotes } from '@/hooks/useNotes';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { useBookSearch } from '@/hooks/useBookSearch';
 import { useToast } from '@/components/common/Toast';
 import { PDFViewer } from '@/components/reader/PDFViewer';
 import { ReaderControls } from '@/components/reader/ReaderControls';
 import { NotesPanel } from '@/components/notes/NotesPanel';
 import { ReadAloudControls } from '@/components/readaloud/ReadAloudControls';
-import { SearchBar } from '@/components/reader/SearchBar';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { BatchAudioGenerator } from '@/components/audio/BatchAudioGenerator';
 import { Modal } from '@/components/common/Modal';
 import { Loading } from '@/components/common/Loading';
 import { booksApi } from '@/services/api';
 import { CreateNoteRequest } from '@/types';
-import * as pdfjs from 'pdfjs-dist';
 
 export default function ReaderPage() {
   const params = useParams();
@@ -42,9 +39,6 @@ export default function ReaderPage() {
   const [showNotes, setShowNotes] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showReadAloud, setShowReadAloud] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  const [pdfDoc, setPdfDoc] = useState<pdfjs.PDFDocumentProxy | null>(null);
 
   const { showToast } = useToast();
 
@@ -53,49 +47,9 @@ export default function ReaderPage() {
     (page: number) => {
       setCurrentPageState(page);
       setCurrentPage(page);
-      // Note: Audio player automatically handles loading new page audio via useEffect
     },
     [setCurrentPage]
   );
-
-  // Book search functionality
-  const {
-    currentMatchIndex,
-    totalMatches,
-    nextMatch,
-    previousMatch,
-  } = useBookSearch({
-    pdfDoc,
-    searchText,
-    currentPage,
-    onPageChange: handlePageChange,
-  });
-
-  // Load PDF document for search
-  useEffect(() => {
-    if (!book) return;
-
-    let isMounted = true;
-    const pdfUrl = booksApi.getPdfUrl(bookId);
-
-    const loadPdf = async () => {
-      try {
-        const loadingTask = pdfjs.getDocument(pdfUrl);
-        const pdf = await loadingTask.promise;
-        if (isMounted) {
-          setPdfDoc(pdf);
-        }
-      } catch (error) {
-        console.error('Failed to load PDF for search:', error);
-      }
-    };
-
-    loadPdf();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [book, bookId]);
 
   // Audio player
   const {
@@ -136,15 +90,7 @@ export default function ReaderPage() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't interfere with input fields (unless it's Cmd/Ctrl+F)
       const isInputField = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
-
-      // Handle Cmd/Ctrl+F for search
-      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
-        e.preventDefault();
-        setShowSearch(true);
-        return;
-      }
 
       if (isInputField) {
         return;
@@ -161,9 +107,6 @@ export default function ReaderPage() {
           if (isFullscreen) {
             document.exitFullscreen?.();
             setIsFullscreen(false);
-          } else if (showSearch) {
-            setShowSearch(false);
-            setSearchText('');
           }
           break;
       }
@@ -171,7 +114,7 @@ export default function ReaderPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentPage, totalPages, isFullscreen, showSearch, handlePageChange]);
+  }, [currentPage, totalPages, isFullscreen, handlePageChange]);
 
   // Fullscreen handling
   const toggleFullscreen = () => {
@@ -248,7 +191,6 @@ export default function ReaderPage() {
         onToggleNotes={() => setShowNotes(!showNotes)}
         onToggleReadAloud={handleToggleReadAloud}
         onToggleSettings={() => setShowSettings(!showSettings)}
-        onToggleSearch={() => setShowSearch(!showSearch)}
         isFullscreen={isFullscreen}
       />
 
@@ -260,23 +202,6 @@ export default function ReaderPage() {
           scale={scale}
           onPageChange={handlePageChange}
           onTotalPagesLoad={setTotalPages}
-          searchText={searchText}
-          currentSearchIndex={currentMatchIndex}
-        />
-
-        {/* Search Bar */}
-        <SearchBar
-          searchText={searchText}
-          onSearchChange={setSearchText}
-          currentIndex={currentMatchIndex}
-          totalResults={totalMatches}
-          onNext={nextMatch}
-          onPrevious={previousMatch}
-          onClose={() => {
-            setShowSearch(false);
-            setSearchText('');
-          }}
-          isOpen={showSearch}
         />
 
         {/* Read Aloud Controls Overlay */}

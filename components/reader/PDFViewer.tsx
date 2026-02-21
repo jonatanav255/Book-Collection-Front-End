@@ -15,9 +15,6 @@ interface PDFViewerProps {
   scale: number;
   onPageChange: (page: number) => void;
   onTotalPagesLoad: (total: number) => void;
-  onTextExtract?: (text: string) => void;
-  searchText?: string;
-  currentSearchIndex?: number;
 }
 
 export function PDFViewer({
@@ -26,9 +23,6 @@ export function PDFViewer({
   scale,
   onPageChange,
   onTotalPagesLoad,
-  onTextExtract,
-  searchText,
-  currentSearchIndex,
 }: PDFViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
@@ -120,16 +114,8 @@ export function PDFViewer({
         textLayerDiv.style.width = `${viewport.width}px`;
         textLayerDiv.style.height = `${viewport.height}px`;
 
-        // Render text layer for selection and search
+        // Render text layer for selection
         const textContent = await page.getTextContent();
-
-        // Extract text for callback if provided
-        if (onTextExtract) {
-          const text = textContent.items
-            .map((item: any) => item.str)
-            .join(' ');
-          onTextExtract(text);
-        }
 
         // Render text layer items
         textContent.items.forEach((item: any) => {
@@ -142,50 +128,7 @@ export function PDFViewer({
           textDiv.style.top = `${tx[5] - fontSize}px`;
           textDiv.style.fontSize = `${fontSize}px`;
           textDiv.style.fontFamily = item.fontName || 'sans-serif';
-
-          const itemText = item.str || '';
-
-          // Handle search highlighting
-          if (searchText && searchText.trim().length > 0) {
-            const searchLower = searchText.toLowerCase();
-            const itemLower = itemText.toLowerCase();
-
-            if (itemLower.includes(searchLower)) {
-              // Split text to highlight matches
-              const parts: string[] = [];
-              let lastIndex = 0;
-              let index = itemLower.indexOf(searchLower);
-
-              while (index !== -1) {
-                // Add text before match
-                if (index > lastIndex) {
-                  parts.push(itemText.substring(lastIndex, index));
-                }
-
-                // Add highlighted match
-                const matchSpan = document.createElement('span');
-                matchSpan.className = 'search-highlight';
-                matchSpan.textContent = itemText.substring(index, index + searchText.length);
-                textDiv.appendChild(document.createTextNode(parts.join('')));
-                parts.length = 0;
-                textDiv.appendChild(matchSpan);
-
-                lastIndex = index + searchText.length;
-                index = itemLower.indexOf(searchLower, lastIndex);
-              }
-
-              // Add remaining text
-              if (lastIndex < itemText.length) {
-                textDiv.appendChild(document.createTextNode(itemText.substring(lastIndex)));
-              }
-            } else {
-              textDiv.textContent = itemText;
-            }
-          }
-          // Default: just show text
-          else {
-            textDiv.textContent = itemText;
-          }
+          textDiv.textContent = item.str || '';
 
           textLayerDiv.appendChild(textDiv);
         });
@@ -204,7 +147,7 @@ export function PDFViewer({
         renderTaskRef.current.cancel();
       }
     };
-  }, [pdfDoc, pageNumber, scale, onTextExtract, searchText]);
+  }, [pdfDoc, pageNumber, scale]);
 
   if (loading) {
     return (

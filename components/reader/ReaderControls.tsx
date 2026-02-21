@@ -25,7 +25,6 @@ interface ReaderControlsProps {
   onToggleNotes: () => void;
   onToggleReadAloud: () => void;
   onToggleSettings: () => void;
-  onToggleSearch: () => void;
   isFullscreen: boolean;
 }
 
@@ -39,7 +38,6 @@ export function ReaderControls({
   onToggleNotes,
   onToggleReadAloud,
   onToggleSettings,
-  onToggleSearch,
   isFullscreen,
 }: ReaderControlsProps) {
   const [pageInput, setPageInput] = useState(currentPage.toString());
@@ -160,14 +158,6 @@ export function ReaderControls({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={onToggleSearch}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            title="Search (Ctrl+F)"
-          >
-            <Search className="w-5 h-5" />
-          </button>
-
           <button
             onClick={onToggleReadAloud}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
