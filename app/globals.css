@@ -105,7 +105,7 @@ html {
   cursor: text;
 }
 
-.pdf-text-layer > div {
+.pdf-text-layer > span {
   color: transparent;
   white-space: pre;
   cursor: text;

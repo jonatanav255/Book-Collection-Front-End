@@ -114,20 +114,20 @@ export function PDFViewer({
         textLayerDiv.style.width = `${viewport.width}px`;
         textLayerDiv.style.height = `${viewport.height}px`;
 
-        // Render text layer for selection
+        // Render text layer for native browser text selection
         const textContent = await page.getTextContent();
 
-        // Render text layer items
         textContent.items.forEach((item: any) => {
           const tx = pdfjs.Util.transform(viewport.transform, item.transform);
           const fontSize = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]);
 
-          const textDiv = document.createElement('div');
+          const textDiv = document.createElement('span');
           textDiv.style.position = 'absolute';
           textDiv.style.left = `${tx[4]}px`;
           textDiv.style.top = `${tx[5] - fontSize}px`;
           textDiv.style.fontSize = `${fontSize}px`;
           textDiv.style.fontFamily = item.fontName || 'sans-serif';
+          textDiv.style.whiteSpace = 'pre';
           textDiv.textContent = item.str || '';
 
           textLayerDiv.appendChild(textDiv);
