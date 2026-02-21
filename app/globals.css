@@ -67,7 +67,18 @@ body {
   }
 }
 
-/* Dark theme (only theme) */
+/* Light theme */
+.theme-light {
+  --background: #ffffff; /* white */
+  --foreground: #0f172a; /* slate-900 */
+  --background-secondary: #f8fafc; /* slate-50 */
+  --border-color: #e2e8f0; /* slate-200 */
+  --icon-color: #475569; /* slate-600 */
+  --icon-color-secondary: #3b82f6; /* blue-500 */
+  --pdf-filter: none;
+}
+
+/* Dark theme */
 .theme-dark {
   --background: #0f172a; /* slate-900 */
   --foreground: #f1f5f9; /* slate-100 */

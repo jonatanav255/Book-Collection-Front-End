@@ -11,6 +11,7 @@ import { PDFViewer } from '@/components/reader/PDFViewer';
 import { ReaderControls } from '@/components/reader/ReaderControls';
 import { NotesPanel } from '@/components/notes/NotesPanel';
 import { ReadAloudControls } from '@/components/readaloud/ReadAloudControls';
+import { Timer } from '@/components/reader/Timer';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { BatchAudioGenerator } from '@/components/audio/BatchAudioGenerator';
 import { Modal } from '@/components/common/Modal';
@@ -39,6 +40,8 @@ export default function ReaderPage() {
   const [showNotes, setShowNotes] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showReadAloud, setShowReadAloud] = useState(false);
+  const [showTimer, setShowTimer] = useState(false);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   const { showToast } = useToast();
 
@@ -191,7 +194,9 @@ export default function ReaderPage() {
         onToggleNotes={() => setShowNotes(!showNotes)}
         onToggleReadAloud={handleToggleReadAloud}
         onToggleSettings={() => setShowSettings(!showSettings)}
+        onToggleTimer={() => setShowTimer(!showTimer)}
         isFullscreen={isFullscreen}
+        isTimerRunning={isTimerRunning}
       />
 
       {/* PDF Viewer */}
@@ -232,6 +237,9 @@ export default function ReaderPage() {
         onExportNotes={handleExportNotes}
       />
 
+      {/* Timer - shows modal when open, compact view when running and closed */}
+      <Timer isOpen={showTimer} onClose={() => setShowTimer(false)} onRunningChange={setIsTimerRunning} />
+
       {/* Settings Modal */}
       <Modal
         isOpen={showSettings}
@@ -240,10 +248,7 @@ export default function ReaderPage() {
         size="lg"
       >
         <div className="space-y-6">
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Theme</h3>
-            <ThemeSelector />
-          </div>
+          <ThemeSelector />
 
           <hr className="border-gray-200 dark:border-gray-700" />
 

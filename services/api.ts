@@ -55,6 +55,11 @@ export const booksApi = {
     return handleResponse<Book>(response);
   },
 
+  async getFeatured(limit: number = 6): Promise<Book[]> {
+    const response = await fetch(`${API_URL}/books/featured?limit=${limit}`);
+    return handleResponse<Book[]>(response);
+  },
+
   async upload(file: File): Promise<Book> {
     const formData = new FormData();
     formData.append('file', file);

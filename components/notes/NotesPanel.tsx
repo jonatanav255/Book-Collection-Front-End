@@ -32,7 +32,7 @@ export function NotesPanel({
   const [showEditor, setShowEditor] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'page' | 'date'>('page');
+  const [sortAscending, setSortAscending] = useState(true);
 
   if (!isOpen) return null;
 
@@ -60,11 +60,8 @@ export function NotesPanel({
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
 
-    if (sortBy === 'page') {
-      return a.pageNumber - b.pageNumber;
-    } else {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    }
+    // Sort by page number (ascending or descending)
+    return sortAscending ? a.pageNumber - b.pageNumber : b.pageNumber - a.pageNumber;
   });
 
   return (
@@ -102,18 +99,22 @@ export function NotesPanel({
 
           <div className="flex gap-2">
             <button
-              onClick={() => setSortBy(sortBy === 'page' ? 'date' : 'page')}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              title={`Sort by ${sortBy === 'page' ? 'date' : 'page'}`}
+              onClick={() => setSortAscending(!sortAscending)}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title={sortAscending ? 'Sort: Page 1 → Last. Click to reverse' : 'Sort: Last → Page 1. Click to reverse'}
             >
-              <ArrowUpDown className="w-4 h-4" />
+              <ArrowUpDown className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">
+                {sortAscending ? '1 → Last' : 'Last → 1'}
+              </span>
             </button>
             <button
               onClick={onExportNotes}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              title="Export notes"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title="Download notes as text file"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">Export</span>
             </button>
           </div>
         </div>

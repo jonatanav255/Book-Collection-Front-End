@@ -12,6 +12,8 @@ import {
   Volume2,
   Settings,
   Search,
+  Timer,
+  TimerReset,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -25,7 +27,9 @@ interface ReaderControlsProps {
   onToggleNotes: () => void;
   onToggleReadAloud: () => void;
   onToggleSettings: () => void;
+  onToggleTimer: () => void;
   isFullscreen: boolean;
+  isTimerRunning?: boolean;  // Whether timer is currently running
 }
 
 export function ReaderControls({
@@ -38,7 +42,9 @@ export function ReaderControls({
   onToggleNotes,
   onToggleReadAloud,
   onToggleSettings,
+  onToggleTimer,
   isFullscreen,
+  isTimerRunning = false,
 }: ReaderControlsProps) {
   const [pageInput, setPageInput] = useState(currentPage.toString());
 
@@ -92,7 +98,7 @@ export function ReaderControls({
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               title="Back to Library"
             >
-              <Home className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <Home className="w-5 h-5 text-white" />
             </Link>
           )}
 
@@ -102,7 +108,7 @@ export function ReaderControls({
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Previous Page"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-5 h-5 text-white" />
           </button>
 
           <div className="flex items-center gap-2">
@@ -114,9 +120,9 @@ export function ReaderControls({
               onKeyDown={(e) => e.key === 'Enter' && handlePageInputSubmit()}
               min="1"
               max={totalPages}
-              className="w-16 px-2 py-1 text-center border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-16 px-2 py-1 text-center border border-gray-500 rounded bg-gray-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-sm text-white">
               of {totalPages}
             </span>
           </div>
@@ -127,7 +133,7 @@ export function ReaderControls({
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Next Page"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-5 h-5 text-white" />
           </button>
         </div>
 
@@ -139,10 +145,10 @@ export function ReaderControls({
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Zoom Out"
           >
-            <ZoomOut className="w-5 h-5" />
+            <ZoomOut className="w-5 h-5 text-white" />
           </button>
 
-          <span className="text-sm text-gray-600 dark:text-gray-400 min-w-[4rem] text-center">
+          <span className="text-sm text-white min-w-[4rem] text-center">
             {Math.round(scale * 100)}%
           </span>
 
@@ -152,18 +158,31 @@ export function ReaderControls({
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Zoom In"
           >
-            <ZoomIn className="w-5 h-5" />
+            <ZoomIn className="w-5 h-5 text-white" />
           </button>
         </div>
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
+          {/* Timer icon - changes to different icon when running */}
+          <button
+            onClick={onToggleTimer}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title="Reading Timer"
+          >
+            {isTimerRunning ? (
+              <TimerReset className="w-5 h-5 text-white" />
+            ) : (
+              <Timer className="w-5 h-5 text-white" />
+            )}
+          </button>
+
           <button
             onClick={onToggleReadAloud}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Read Aloud"
           >
-            <Volume2 className="w-5 h-5" />
+            <Volume2 className="w-5 h-5 text-white" />
           </button>
 
           <button
@@ -171,7 +190,7 @@ export function ReaderControls({
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Notes"
           >
-            <StickyNote className="w-5 h-5" />
+            <StickyNote className="w-5 h-5 text-white" />
           </button>
 
           <button
@@ -179,7 +198,7 @@ export function ReaderControls({
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Settings"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-5 h-5 text-white" />
           </button>
 
           <button
@@ -187,7 +206,7 @@ export function ReaderControls({
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
           >
-            <Maximize className="w-5 h-5" />
+            <Maximize className="w-5 h-5 text-white" />
           </button>
         </div>
       </div>

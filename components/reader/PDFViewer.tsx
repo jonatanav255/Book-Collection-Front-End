@@ -4,19 +4,40 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import { Loading } from '../common/Loading';
 
-// Use a locally served worker to avoid CDN version mismatches
+/**
+ * Configure PDF.js worker
+ * Uses a locally served worker file to avoid CDN version mismatches
+ * The worker handles PDF parsing in a separate thread for better performance
+ */
 if (typeof window !== 'undefined') {
   pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 }
 
+/**
+ * PDF Viewer component props
+ */
 interface PDFViewerProps {
-  pdfUrl: string;
-  pageNumber: number;
-  scale: number;
-  onPageChange: (page: number) => void;
-  onTotalPagesLoad: (total: number) => void;
+  pdfUrl: string;  // URL to PDF file (from backend API)
+  pageNumber: number;  // Current page number to display (1-indexed)
+  scale: number;  // Zoom level (1.0 = 100%, 1.5 = 150%, etc.)
+  onPageChange: (page: number) => void;  // Callback when page changes
+  onTotalPagesLoad: (total: number) => void;  // Callback when PDF loads with total page count
 }
 
+/**
+ * PDF Viewer Component
+ *
+ * Renders PDF pages using PDF.js with the following features:
+ * - High-quality canvas rendering with device pixel ratio support for sharp display on retina screens
+ * - Transparent text layer overlay for native browser text selection and copy
+ * - Dark mode support via CSS filter
+ * - Zoom support with dynamic scaling
+ * - Page navigation with render task cancellation
+ *
+ * Architecture:
+ * 1. Canvas layer: Renders the actual PDF visual content
+ * 2. Text layer: Transparent overlay with absolutely positioned text for selection/copy functionality
+ */
 export function PDFViewer({
   pdfUrl,
   pageNumber,
@@ -24,15 +45,22 @@ export function PDFViewer({
   onPageChange,
   onTotalPagesLoad,
 }: PDFViewerProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const textLayerRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [pdfDoc, setPdfDoc] = useState<pdfjs.PDFDocumentProxy | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const renderTaskRef = useRef<pdfjs.RenderTask | null>(null);
+  // Refs for DOM elements
+  const canvasRef = useRef<HTMLCanvasElement>(null);  // Canvas for PDF rendering
+  const textLayerRef = useRef<HTMLDivElement>(null);  // Text layer for selection
+  const containerRef = useRef<HTMLDivElement>(null);  // PDF container
 
-  // Load PDF document
+  // State
+  const [pdfDoc, setPdfDoc] = useState<pdfjs.PDFDocumentProxy | null>(null);  // Loaded PDF document
+  const [loading, setLoading] = useState(true);  // Loading state
+  const [error, setError] = useState<string | null>(null);  // Error message
+  const renderTaskRef = useRef<pdfjs.RenderTask | null>(null);  // Current render task for cancellation
+
+  /**
+   * Load PDF document from URL
+   * Fetches and parses the PDF file using PDF.js
+   * Runs when pdfUrl changes
+   */
   useEffect(() => {
     let isMounted = true;
 
@@ -64,7 +92,11 @@ export function PDFViewer({
     };
   }, [pdfUrl, onTotalPagesLoad]);
 
-  // Render current page
+  /**
+   * Render current PDF page
+   * Handles both canvas rendering (visual) and text layer creation (selection)
+   * Runs when pdfDoc, pageNumber, or scale changes
+   */
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current || !textLayerRef.current) return;
 
@@ -72,15 +104,17 @@ export function PDFViewer({
 
     const renderPage = async () => {
       try {
-        // Cancel any ongoing render task
+        // Cancel any ongoing render task to prevent conflicts when rapidly changing pages
         if (renderTaskRef.current) {
           renderTaskRef.current.cancel();
         }
 
+        // Fetch the requested page from the PDF document
         const page = await pdfDoc.getPage(pageNumber);
 
         if (!isMounted) return;
 
+        // Calculate viewport dimensions based on scale
         const viewport = page.getViewport({ scale });
         const canvas = canvasRef.current;
         const textLayerDiv = textLayerRef.current;
@@ -91,6 +125,7 @@ export function PDFViewer({
         if (!context) return;
 
         // Account for device pixel ratio for sharp rendering on retina displays
+        // This ensures crisp PDF rendering on high-DPI screens
         const devicePixelRatio = window.devicePixelRatio || 1;
         canvas.height = viewport.height * devicePixelRatio;
         canvas.width = viewport.width * devicePixelRatio;
@@ -100,6 +135,7 @@ export function PDFViewer({
         // Scale the context to match device pixel ratio
         context.scale(devicePixelRatio, devicePixelRatio);
 
+        // Render PDF page to canvas
         const renderContext = {
           canvasContext: context,
           viewport: viewport,
@@ -109,25 +145,29 @@ export function PDFViewer({
         await renderTaskRef.current.promise;
         renderTaskRef.current = null;
 
-        // Clear previous text layer
+        // Clear previous text layer content
         textLayerDiv.innerHTML = '';
         textLayerDiv.style.width = `${viewport.width}px`;
         textLayerDiv.style.height = `${viewport.height}px`;
 
-        // Render text layer for native browser text selection
+        // Extract text content from PDF page
         const textContent = await page.getTextContent();
 
+        // Create transparent text layer for native browser selection
+        // Each text item is positioned absolutely to match the PDF layout
         textContent.items.forEach((item: any) => {
+          // Transform coordinates from PDF space to viewport space
           const tx = pdfjs.Util.transform(viewport.transform, item.transform);
           const fontSize = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]);
 
+          // Create span element for each text item
           const textDiv = document.createElement('span');
           textDiv.style.position = 'absolute';
           textDiv.style.left = `${tx[4]}px`;
           textDiv.style.top = `${tx[5] - fontSize}px`;
           textDiv.style.fontSize = `${fontSize}px`;
           textDiv.style.fontFamily = item.fontName || 'sans-serif';
-          textDiv.style.whiteSpace = 'pre';
+          textDiv.style.whiteSpace = 'pre';  // Preserve whitespace
           textDiv.textContent = item.str || '';
 
           textLayerDiv.appendChild(textDiv);

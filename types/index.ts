@@ -64,6 +64,7 @@ export interface UpdateNoteRequest {
 
 // Preferences Types
 export enum ThemePreset {
+  LIGHT = 'light',
   DARK = 'dark',
 }
 

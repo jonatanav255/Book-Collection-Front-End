@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Pin, Edit2, Trash2, MoreVertical } from 'lucide-react';
 import { Note, NoteColor } from '@/types';
 import { formatDistanceToNow } from '@/utils/date';
@@ -14,9 +14,28 @@ interface NoteCardProps {
 
 export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   const colorStyles = {
-    [NoteColor.IDEA]: 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700',
+    [NoteColor.IDEA]: 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-700',
     [NoteColor.QUESTION]: 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-700',
     [NoteColor.SUMMARY]: 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700',
     [NoteColor.QUOTE]: 'bg-purple-50 border-purple-200 dark:bg-purple-900/20 dark:border-purple-700',
@@ -29,6 +48,13 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
     [NoteColor.QUOTE]: 'Quote',
   };
 
+  const labelStyles = {
+    [NoteColor.IDEA]: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+    [NoteColor.QUESTION]: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+    [NoteColor.SUMMARY]: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+    [NoteColor.QUOTE]: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  };
+
   return (
     <div
       className={`relative p-4 border rounded-lg ${colorStyles[note.color]} transition-all hover:shadow-md`}
@@ -39,7 +65,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
           <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
             Page {note.pageNumber}
           </span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-white/50 dark:bg-black/20 font-medium">
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${labelStyles[note.color]}`}>
             {colorLabels[note.color]}
           </span>
           {note.pinned && (
@@ -56,7 +82,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
 
         {/* Dropdown Menu */}
         {showMenu && (
-          <div className="absolute right-4 top-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 min-w-[150px]">
+          <div ref={menuRef} className="absolute right-4 top-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 min-w-[150px]">
             <button
               onClick={() => {
                 onTogglePin(note.id, !note.pinned);
@@ -92,14 +118,24 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
       </div>
 
       {/* Content */}
-      <div className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-2">
-        {note.content}
+      <div
+        className="text-sm text-gray-800 dark:text-gray-200 mb-2 cursor-pointer pr-8"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className={`break-words ${isExpanded ? '' : 'line-clamp-3'}`}>
+          {note.content}
+        </div>
+        {note.content.length > 150 && (
+          <button className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1">
+            {isExpanded ? 'Show less' : 'Show more'}
+          </button>
+        )}
       </div>
 
       {/* Footer */}
       <div className="text-xs text-gray-500 dark:text-gray-400">
         {formatDistanceToNow(note.createdAt)}
-        {note.updatedAt !== note.createdAt && ' (edited)'}
+        {Math.abs(new Date(note.updatedAt).getTime() - new Date(note.createdAt).getTime()) > 1000 && ' (edited)'}
       </div>
     </div>
   );

@@ -43,8 +43,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const root = document.documentElement;
 
-    // Add dark theme classes
-    root.classList.add('theme-dark', 'dark');
+    // Remove all theme classes first
+    root.classList.remove('theme-light', 'theme-dark', 'dark');
+
+    // Apply selected theme
+    switch (preferences.theme) {
+      case ThemePreset.LIGHT:
+        root.classList.add('theme-light');
+        break;
+      case ThemePreset.DARK:
+        root.classList.add('theme-dark', 'dark');
+        break;
+    }
 
     // Apply font family
     root.style.setProperty('--font-family', preferences.fontFamily);
