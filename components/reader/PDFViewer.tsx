@@ -47,7 +47,6 @@ export function PDFViewer({
 }: PDFViewerProps) {
   // Refs for DOM elements
   const canvasRef = useRef<HTMLCanvasElement>(null);  // Canvas for PDF rendering
-  const textLayerRef = useRef<HTMLDivElement>(null);  // Text layer for selection
   const containerRef = useRef<HTMLDivElement>(null);  // PDF container
 
   // State
@@ -98,7 +97,7 @@ export function PDFViewer({
    * Runs when pdfDoc, pageNumber, or scale changes
    */
   useEffect(() => {
-    if (!pdfDoc || !canvasRef.current || !textLayerRef.current) return;
+    if (!pdfDoc || !canvasRef.current) return;
 
     let isMounted = true;
 
@@ -117,9 +116,8 @@ export function PDFViewer({
         // Calculate viewport dimensions based on scale
         const viewport = page.getViewport({ scale });
         const canvas = canvasRef.current;
-        const textLayerDiv = textLayerRef.current;
 
-        if (!canvas || !textLayerDiv) return;
+        if (!canvas) return;
 
         const context = canvas.getContext('2d');
         if (!context) return;
@@ -144,34 +142,6 @@ export function PDFViewer({
         renderTaskRef.current = page.render(renderContext);
         await renderTaskRef.current.promise;
         renderTaskRef.current = null;
-
-        // Clear previous text layer content
-        textLayerDiv.innerHTML = '';
-        textLayerDiv.style.width = `${viewport.width}px`;
-        textLayerDiv.style.height = `${viewport.height}px`;
-
-        // Extract text content from PDF page
-        const textContent = await page.getTextContent();
-
-        // Create transparent text layer for native browser selection
-        // Each text item is positioned absolutely to match the PDF layout
-        textContent.items.forEach((item: any) => {
-          // Transform coordinates from PDF space to viewport space
-          const tx = pdfjs.Util.transform(viewport.transform, item.transform);
-          const fontSize = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]);
-
-          // Create span element for each text item
-          const textDiv = document.createElement('span');
-          textDiv.style.position = 'absolute';
-          textDiv.style.left = `${tx[4]}px`;
-          textDiv.style.top = `${tx[5] - fontSize}px`;
-          textDiv.style.fontSize = `${fontSize}px`;
-          textDiv.style.fontFamily = item.fontName || 'sans-serif';
-          textDiv.style.whiteSpace = 'pre';  // Preserve whitespace
-          textDiv.textContent = item.str || '';
-
-          textLayerDiv.appendChild(textDiv);
-        });
       } catch (err: any) {
         // Silently handle rendering errors (except cancellation which is expected)
       }
@@ -215,17 +185,6 @@ export function PDFViewer({
             style={{
               filter: 'var(--pdf-filter, none)',
               boxShadow: '0 0 20px 10px rgba(0, 0, 0, 0.05)',
-            }}
-          />
-          <div
-            ref={textLayerRef}
-            className="pdf-text-layer"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              overflow: 'hidden',
-              lineHeight: 1,
             }}
           />
         </div>
