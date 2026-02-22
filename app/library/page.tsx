@@ -21,7 +21,7 @@ export default function AllBooksPage() {
   const [uploading, setUploading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  const { books, loading, uploadBook, deleteBook } = useBooks();
+  const { books, loading, uploadBook, deleteBook, updateBookStatus } = useBooks();
   const { showToast } = useToast();
 
   const handleUpload = async (file: File) => {
@@ -42,6 +42,15 @@ export default function AllBooksPage() {
       showToast('Book deleted successfully', 'success');
     } catch (err) {
       showToast('Failed to delete book', 'error');
+    }
+  };
+
+  const handleStatusChange = async (id: string, status: ReadingStatus) => {
+    try {
+      await updateBookStatus(id, status);
+      showToast('Book status updated', 'success');
+    } catch (err) {
+      showToast('Failed to update book status', 'error');
     }
   };
 
@@ -179,7 +188,7 @@ export default function AllBooksPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {filteredBooks.map((book) => (
-              <BookCard key={book.id} book={book} onDelete={handleDelete} />
+              <BookCard key={book.id} book={book} onDelete={handleDelete} onStatusChange={handleStatusChange} />
             ))}
           </div>
         )}

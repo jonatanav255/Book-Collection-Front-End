@@ -1,24 +1,45 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Trash2, MoreVertical } from 'lucide-react';
-import { Book } from '@/types';
+import { Trash2, MoreVertical, CheckCircle } from 'lucide-react';
+import { Book, ReadingStatus } from '@/types';
 import { booksApi } from '@/services/api';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
 interface BookCardProps {
   book: Book;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, status: ReadingStatus) => void;
 }
 
-export function BookCard({ book, onDelete }: BookCardProps) {
+export function BookCard({ book, onDelete, onStatusChange }: BookCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const progress = book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
+
+  const progress = book.status === 'FINISHED'
+    ? 100
+    : book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
 
   const imageUrl = imageError || !book.coverUrl
     ? booksApi.getThumbnailUrl(book.id)
@@ -46,11 +67,13 @@ export function BookCard({ book, onDelete }: BookCardProps) {
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                 <div className="w-full bg-gray-300 rounded-full h-2 overflow-hidden">
                   <div
-                    className="bg-blue-500 h-full transition-all"
+                    className={`h-full transition-all ${book.status === 'FINISHED' ? 'bg-green-500' : 'bg-blue-500'}`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <p className="text-white text-xs mt-1 font-medium">{progress}% complete</p>
+                <p className="text-white text-xs mt-1 font-medium">
+                  {book.status === 'FINISHED' ? 'Complete' : `${progress}% complete`}
+                </p>
               </div>
             )}
           </div>
@@ -92,7 +115,19 @@ export function BookCard({ book, onDelete }: BookCardProps) {
 
           {/* Dropdown Menu */}
           {showMenu && (
-            <div className="absolute right-4 bottom-4 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+            <div ref={menuRef} className="absolute right-4 bottom-4 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 min-w-[180px]">
+              {book.status !== 'FINISHED' && onStatusChange && (
+                <button
+                  onClick={() => {
+                    onStatusChange(book.id, ReadingStatus.FINISHED);
+                    setShowMenu(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left rounded-t-lg"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Mark as Complete
+                </button>
+              )}
               <button
                 onClick={() => {
                   setShowDeleteConfirm(true);

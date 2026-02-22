@@ -59,6 +59,18 @@ export function useBooks(filters?: {
     }
   }, []);
 
+  const updateBookStatus = useCallback(async (id: string, status: ReadingStatus) => {
+    try {
+      const updated = await booksApi.update(id, { status });
+      setBooks((prev) =>
+        prev.map((book) => (book.id === id ? updated : book))
+      );
+      return updated;
+    } catch (err) {
+      throw err;
+    }
+  }, []);
+
   return {
     books,
     loading,
@@ -67,6 +79,7 @@ export function useBooks(filters?: {
     uploadBook,
     deleteBook,
     updateBook,
+    updateBookStatus,
   };
 }
 
