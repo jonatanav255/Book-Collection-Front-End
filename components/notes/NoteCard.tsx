@@ -72,15 +72,22 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+          <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
             Page {note.pageNumber}
           </span>
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${labelStyles[note.color]}`}>
             {colorLabels[note.color]}
           </span>
-          {note.pinned && (
-            <Pin className="w-3 h-3 text-gray-600 dark:text-gray-400" fill="currentColor" />
-          )}
+          <button
+            onClick={() => onTogglePin(note.id, !note.pinned)}
+            className="p-0.5 rounded hover:bg-white/50 dark:hover:bg-black/20 transition-colors"
+            title={note.pinned ? 'Unpin note' : 'Pin note'}
+          >
+            <Pin
+              className="w-3 h-3 text-gray-600 dark:text-gray-400"
+              fill={note.pinned ? "currentColor" : "none"}
+            />
+          </button>
         </div>
 
         <button
