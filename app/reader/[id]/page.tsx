@@ -90,6 +90,16 @@ export default function ReaderPage() {
     }
   }, [progress]);
 
+  // Flush pending progress updates when leaving the page
+  useEffect(() => {
+    return () => {
+      // Save current page immediately when unmounting (user navigating away)
+      if (currentPage > 0) {
+        setCurrentPage(currentPage, true); // immediate = true to bypass debounce
+      }
+    };
+  }, [currentPage, setCurrentPage]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
