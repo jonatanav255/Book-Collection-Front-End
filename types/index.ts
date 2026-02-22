@@ -133,6 +133,15 @@ export interface ReadAloudControls {
   setVoice: (voice: SpeechSynthesisVoice) => void;
 }
 
+// Batch Upload Types
+export type BatchUploadFileStatus = 'pending' | 'uploading' | 'success' | 'skipped' | 'failed';
+
+export interface BatchUploadFileResult {
+  file: File;
+  status: BatchUploadFileStatus;
+  error?: string;
+}
+
 // Export/Import Types
 export interface LibraryExport {
   books: Book[];

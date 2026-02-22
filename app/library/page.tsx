@@ -12,7 +12,9 @@ import { UploadButton } from '@/components/library/UploadButton';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { Modal } from '@/components/common/Modal';
 import { BookCardSkeleton } from '@/components/common/Loading';
+import { BatchUploadProgress } from '@/components/library/BatchUploadProgress';
 import { ReadingStatus } from '@/types';
+import type { BatchUploadFileResult } from '@/types';
 
 export default function AllBooksPage() {
   const [search, setSearch] = useState('');
@@ -20,20 +22,48 @@ export default function AllBooksPage() {
   const [statusFilter, setStatusFilter] = useState<ReadingStatus | ''>('');
   const [uploading, setUploading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [batchResults, setBatchResults] = useState<BatchUploadFileResult[]>([]);
+  const [batchIndex, setBatchIndex] = useState(0);
+  const [batchComplete, setBatchComplete] = useState(false);
+  const [showBatchModal, setShowBatchModal] = useState(false);
 
-  const { books, loading, uploadBook, deleteBook, updateBookStatus } = useBooks();
+  const { books, loading, uploadBook, uploadBooks, deleteBook, updateBookStatus } = useBooks();
   const { showToast } = useToast();
 
-  const handleUpload = async (file: File) => {
-    try {
-      setUploading(true);
-      await uploadBook(file);
-      showToast('Book uploaded successfully!', 'success');
-    } catch (err) {
-      showToast('Failed to upload book. Please try again.', 'error');
-    } finally {
-      setUploading(false);
+  const handleUpload = async (files: File[]) => {
+    if (files.length === 1) {
+      try {
+        setUploading(true);
+        await uploadBook(files[0]);
+        showToast('Book uploaded successfully!', 'success');
+      } catch (err) {
+        showToast('Failed to upload book. Please try again.', 'error');
+      } finally {
+        setUploading(false);
+      }
+      return;
     }
+
+    setBatchComplete(false);
+    setBatchIndex(0);
+    setBatchResults(files.map((file) => ({ file, status: 'pending' as const })));
+    setShowBatchModal(true);
+
+    const results = await uploadBooks(files, (currentResults, index) => {
+      setBatchResults([...currentResults]);
+      setBatchIndex(index);
+    });
+
+    setBatchResults([...results]);
+    setBatchComplete(true);
+
+    const uploaded = results.filter((r) => r.status === 'success').length;
+    const skipped = results.filter((r) => r.status === 'skipped').length;
+    const failed = results.filter((r) => r.status === 'failed').length;
+    const parts = [`${uploaded} uploaded`];
+    if (skipped > 0) parts.push(`${skipped} skipped`);
+    if (failed > 0) parts.push(`${failed} failed`);
+    showToast(parts.join(', '), failed > 0 ? 'error' : 'success');
   };
 
   const handleDelete = async (id: string) => {
@@ -203,6 +233,15 @@ export default function AllBooksPage() {
       >
         <ThemeSelector />
       </Modal>
+
+      {/* Batch Upload Progress Modal */}
+      <BatchUploadProgress
+        isOpen={showBatchModal}
+        onClose={() => setShowBatchModal(false)}
+        results={batchResults}
+        currentIndex={batchIndex}
+        isComplete={batchComplete}
+      />
     </div>
   );
 }

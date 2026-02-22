@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { booksApi } from '@/services/api';
-import type { Book, ReadingStatus } from '@/types';
+import { booksApi, ApiError } from '@/services/api';
+import type { Book, ReadingStatus, BatchUploadFileResult } from '@/types';
 
 export function useBooks(filters?: {
   search?: string;
@@ -61,6 +61,44 @@ export function useBooks(filters?: {
     }
   }, []);
 
+  const uploadBooks = useCallback(
+    async (
+      files: File[],
+      onProgress?: (results: BatchUploadFileResult[], currentIndex: number) => void
+    ): Promise<BatchUploadFileResult[]> => {
+      const results: BatchUploadFileResult[] = files.map((file) => ({
+        file,
+        status: 'pending' as const,
+      }));
+
+      for (let i = 0; i < files.length; i++) {
+        results[i] = { ...results[i], status: 'uploading' };
+        onProgress?.(results, i);
+
+        try {
+          const newBook = await booksApi.upload(files[i]);
+          setBooks((prev) => [newBook, ...prev]);
+          results[i] = { ...results[i], status: 'success' };
+        } catch (err) {
+          if (err instanceof ApiError && err.status === 409) {
+            results[i] = { ...results[i], status: 'skipped', error: 'Duplicate file' };
+          } else {
+            results[i] = {
+              ...results[i],
+              status: 'failed',
+              error: err instanceof Error ? err.message : 'Upload failed',
+            };
+          }
+        }
+
+        onProgress?.(results, i);
+      }
+
+      return results;
+    },
+    []
+  );
+
   const deleteBook = useCallback(async (id: string) => {
     try {
       await booksApi.delete(id);
@@ -108,6 +146,7 @@ export function useBooks(filters?: {
     error,
     refetch: fetchBooks,
     uploadBook,
+    uploadBooks,
     deleteBook,
     updateBook,
     updateBookStatus,
