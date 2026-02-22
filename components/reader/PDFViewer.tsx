@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
+import { TextLayer } from 'pdfjs-dist';
 import { Loading } from '../common/Loading';
 
 /**
@@ -48,6 +49,8 @@ export function PDFViewer({
   // Refs for DOM elements
   const canvasRef = useRef<HTMLCanvasElement>(null);  // Canvas for PDF rendering
   const containerRef = useRef<HTMLDivElement>(null);  // PDF container
+  const textLayerRef = useRef<HTMLDivElement>(null);  // Text layer for selection
+  const textLayerInstanceRef = useRef<TextLayer | null>(null);  // Active TextLayer instance
 
   // State
   const [pdfDoc, setPdfDoc] = useState<pdfjs.PDFDocumentProxy | null>(null);  // Loaded PDF document
@@ -142,6 +145,27 @@ export function PDFViewer({
         renderTaskRef.current = page.render(renderContext);
         await renderTaskRef.current.promise;
         renderTaskRef.current = null;
+
+        // Render text layer for selection/copy support
+        if (textLayerInstanceRef.current) {
+          textLayerInstanceRef.current.cancel();
+          textLayerInstanceRef.current = null;
+        }
+        const textLayerDiv = textLayerRef.current;
+        if (textLayerDiv) {
+          textLayerDiv.innerHTML = '';
+          // Set --scale-factor used by pdfjs TextLayer for positioning
+          textLayerDiv.style.setProperty('--scale-factor', String(viewport.scale));
+
+          const textContent = await page.getTextContent();
+          const textLayer = new TextLayer({
+            textContentSource: textContent,
+            container: textLayerDiv,
+            viewport: viewport,
+          });
+          textLayerInstanceRef.current = textLayer;
+          await textLayer.render();
+        }
       } catch (err: any) {
         // Silently handle rendering errors (except cancellation which is expected)
       }
@@ -153,6 +177,9 @@ export function PDFViewer({
       isMounted = false;
       if (renderTaskRef.current) {
         renderTaskRef.current.cancel();
+      }
+      if (textLayerInstanceRef.current) {
+        textLayerInstanceRef.current.cancel();
       }
     };
   }, [pdfDoc, pageNumber, scale]);
@@ -186,6 +213,10 @@ export function PDFViewer({
               filter: 'var(--pdf-filter, none)',
               boxShadow: '0 0 20px 10px rgba(0, 0, 0, 0.05)',
             }}
+          />
+          <div
+            ref={textLayerRef}
+            className="textLayer"
           />
         </div>
       </div>

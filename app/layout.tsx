@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "pdfjs-dist/web/pdf_viewer.css";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ToastProvider } from "@/components/common/Toast";

@@ -120,38 +120,13 @@ html {
   scroll-behavior: smooth;
 }
 
-/* PDF Text Layer Styles */
-.pdf-text-layer {
-  user-select: text;
-  cursor: text;
+/* PDF Text Layer — uses official pdfjs .textLayer class from pdf_viewer.css */
+/* Override selection color for better visibility in dark mode */
+.textLayer ::selection {
+  background: rgba(0, 100, 255, 0.35);
 }
-
-.pdf-text-layer > span {
-  color: transparent;
-  white-space: pre;
-  cursor: text;
-  transform-origin: 0% 0%;
-}
-
-/* Text selection in PDF - SUPER BLUE with fully opaque background */
-.pdf-text-layer ::selection {
-  background: #00A3FF;
-  color: #FFFFFF;
-  text-shadow: none;
-  -webkit-text-fill-color: #FFFFFF;
-}
-
-/* Search highlight in PDF */
-.pdf-text-layer .search-highlight {
-  background-color: #FFD700;
-  color: #000000;
-  -webkit-text-fill-color: #000000;
-}
-
-.pdf-text-layer .search-highlight.current {
-  background-color: #FFA500;
-  color: #000000;
-  -webkit-text-fill-color: #000000;
+.textLayer ::-moz-selection {
+  background: rgba(0, 100, 255, 0.35);
 }
 
 /* Markdown Code Blocks */
