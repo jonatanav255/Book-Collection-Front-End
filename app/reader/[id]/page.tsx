@@ -100,6 +100,29 @@ export default function ReaderPage() {
     };
   }, [currentPage, setCurrentPage]);
 
+  // Save page on browser refresh/close and visibility change
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (currentPage > 0) {
+        setCurrentPage(currentPage, true);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && currentPage > 0) {
+        setCurrentPage(currentPage, true);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [currentPage, setCurrentPage]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
