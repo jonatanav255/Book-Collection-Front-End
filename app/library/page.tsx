@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Library, Settings as SettingsIcon, ArrowLeft } from 'lucide-react';
+import { Library, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useBooks, usePaginatedBooks } from '@/hooks/useBooks';
 import { useToast } from '@/components/common/Toast';
@@ -9,8 +9,6 @@ import { BookCard } from '@/components/library/BookCard';
 import { SearchBar } from '@/components/library/SearchBar';
 import { FilterBar } from '@/components/library/FilterBar';
 import { UploadButton } from '@/components/library/UploadButton';
-import { ThemeSelector } from '@/components/theme/ThemeSelector';
-import { Modal } from '@/components/common/Modal';
 import { BookCardSkeleton } from '@/components/common/Loading';
 import { BatchUploadProgress } from '@/components/library/BatchUploadProgress';
 import { ReadingStatus } from '@/types';
@@ -30,7 +28,6 @@ export default function AllBooksPage() {
   const [sortBy, setSortBy] = useState('dateAdded');
   const [statusFilter, setStatusFilter] = useState<ReadingStatus | ''>('');
   const [uploading, setUploading] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [batchResults, setBatchResults] = useState<BatchUploadFileResult[]>([]);
   const [batchIndex, setBatchIndex] = useState(0);
   const [batchComplete, setBatchComplete] = useState(false);
@@ -52,7 +49,7 @@ export default function AllBooksPage() {
     status: statusFilter || undefined,
   });
 
-  const { uploadBook, uploadBooks, deleteBook, updateBookStatus } = useBooks(undefined, { skip: true });
+  const { uploadBook, uploadBooks, deleteBook, updateBookStatus, updateBook } = useBooks(undefined, { skip: true });
   const { showToast } = useToast();
 
   // Scroll to top on mount (navigating from home page)
@@ -168,6 +165,16 @@ export default function AllBooksPage() {
     }
   }, [updateBookStatus, showToast, refetch, fetchStats]);
 
+  const handleRename = useCallback(async (id: string, title: string) => {
+    try {
+      await updateBook(id, { title });
+      showToast('Book renamed successfully', 'success');
+      refetch();
+    } catch (err) {
+      showToast('Failed to rename book', 'error');
+    }
+  }, [updateBook, showToast, refetch]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
@@ -209,16 +216,7 @@ export default function AllBooksPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowSettings(true)}
-              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-              title="Settings"
-            >
-              <SettingsIcon className="w-6 h-6" style={{ color: 'var(--icon-color)' }} />
-            </button>
-            <UploadButton onUpload={handleUpload} isLoading={uploading} />
-          </div>
+          <UploadButton onUpload={handleUpload} isLoading={uploading} />
         </div>
 
         {/* Search and Filters */}
@@ -252,7 +250,7 @@ export default function AllBooksPage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {books.map((book) => (
-                <BookCard key={book.id} book={book} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+                <BookCard key={book.id} book={book} onDelete={handleDelete} onStatusChange={handleStatusChange} onRename={handleRename} />
               ))}
               {loadingMore &&
                 [...Array(4)].map((_, i) => <BookCardSkeleton key={`skeleton-${i}`} />)}
@@ -261,16 +259,6 @@ export default function AllBooksPage() {
           </>
         )}
       </div>
-
-      {/* Settings Modal */}
-      <Modal
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        title="Reading Preferences"
-        size="lg"
-      >
-        <ThemeSelector />
-      </Modal>
 
       {/* Batch Upload Progress Modal */}
       <BatchUploadProgress

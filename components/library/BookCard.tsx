@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Trash2, MoreVertical, CheckCircle } from 'lucide-react';
+import { Trash2, MoreVertical, CheckCircle, Pencil } from 'lucide-react';
 import { Book, ReadingStatus } from '@/types';
 import { booksApi } from '@/services/api';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -12,14 +12,18 @@ interface BookCardProps {
   book: Book;
   onDelete: (id: string) => void;
   onStatusChange?: (id: string, status: ReadingStatus) => void;
+  onRename?: (id: string, title: string) => void;
 }
 
-export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusChange }: BookCardProps) {
+export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusChange, onRename }: BookCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newTitle, setNewTitle] = useState(book.title);
   const menuRef = useRef<HTMLDivElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -87,11 +91,41 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
 
         {/* Book Info */}
         <div className="p-4 h-[140px] flex flex-col">
-          <Link href={`/reader/${book.id}`}>
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 mb-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors min-h-[48px]">
-              {book.title}
-            </h3>
-          </Link>
+          {isRenaming ? (
+            <input
+              ref={renameInputRef}
+              type="text"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const trimmed = newTitle.trim();
+                  if (trimmed && trimmed !== book.title && onRename) {
+                    onRename(book.id, trimmed);
+                  }
+                  setIsRenaming(false);
+                } else if (e.key === 'Escape') {
+                  setNewTitle(book.title);
+                  setIsRenaming(false);
+                }
+              }}
+              onBlur={() => {
+                const trimmed = newTitle.trim();
+                if (trimmed && trimmed !== book.title && onRename) {
+                  onRename(book.id, trimmed);
+                }
+                setIsRenaming(false);
+              }}
+              autoFocus
+              className="font-semibold text-gray-900 dark:text-gray-100 mb-1 min-h-[48px] w-full bg-transparent border border-blue-500 rounded px-1 outline-none"
+            />
+          ) : (
+            <Link href={`/reader/${book.id}`}>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 mb-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors min-h-[48px]">
+                {book.title}
+              </h3>
+            </Link>
+          )}
           <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1 mb-2 min-h-[20px]">
             {book.author}
           </p>
@@ -134,12 +168,25 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
                   Mark as Complete
                 </button>
               )}
+              {onRename && (
+                <button
+                  onClick={() => {
+                    setNewTitle(book.title);
+                    setIsRenaming(true);
+                    setShowMenu(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Rename
+                </button>
+              )}
               <button
                 onClick={() => {
                   setShowDeleteConfirm(true);
                   setShowMenu(false);
                 }}
-                className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left rounded-lg"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left rounded-b-lg"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete

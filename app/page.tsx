@@ -1,19 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Library, Settings as SettingsIcon } from 'lucide-react';
+import { Library } from 'lucide-react';
 import { useToast } from '@/components/common/Toast';
 import { UploadButton } from '@/components/library/UploadButton';
 import { FeaturedBooks } from '@/components/library/FeaturedBooks';
 import { BatchUploadProgress } from '@/components/library/BatchUploadProgress';
-import { ThemeSelector } from '@/components/theme/ThemeSelector';
-import { Modal } from '@/components/common/Modal';
 import { useBooks } from '@/hooks/useBooks';
 import type { BatchUploadFileResult } from '@/types';
 
 export default function HomePage() {
   const [uploading, setUploading] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [batchResults, setBatchResults] = useState<BatchUploadFileResult[]>([]);
   const [batchIndex, setBatchIndex] = useState(0);
   const [batchComplete, setBatchComplete] = useState(false);
@@ -75,16 +72,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowSettings(true)}
-              className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
-              title="Settings"
-            >
-              <SettingsIcon className="w-6 h-6 text-gray-300" />
-            </button>
-            <UploadButton onUpload={handleUpload} isLoading={uploading} />
-          </div>
+          <UploadButton onUpload={handleUpload} isLoading={uploading} />
         </div>
 
         {/* Featured Books - Recently Read */}
@@ -92,16 +80,6 @@ export default function HomePage() {
           <FeaturedBooks limit={6} />
         </div>
       </div>
-
-      {/* Settings Modal */}
-      <Modal
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        title="Reading Preferences"
-        size="lg"
-      >
-        <ThemeSelector />
-      </Modal>
 
       {/* Batch Upload Progress Modal */}
       <BatchUploadProgress
