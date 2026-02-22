@@ -59,7 +59,6 @@ export function useReadAlong({
       } catch (err) {
         if (isMounted) {
           // Silent fail - word timings are optional enhancement
-          console.warn('Failed to load word timings:', err);
           setWordTimings([]);
           setIsLoading(false);
           loadingRef.current = false;

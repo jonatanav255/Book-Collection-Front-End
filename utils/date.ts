@@ -6,7 +6,6 @@ export function formatDistanceToNow(dateString: string): string {
 
   // Check if date is valid
   if (isNaN(date.getTime())) {
-    console.warn('Invalid date string:', dateString);
     return 'unknown';
   }
 

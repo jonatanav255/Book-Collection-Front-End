@@ -224,7 +224,7 @@ export function Timer({ isOpen, onClose, compact = false, onRunningChange }: Tim
       playTone(659.25, now + 0.15, 0.9);    // E5
       playTone(783.99, now + 0.3, 1.2);     // G5
     } catch (e) {
-      console.log('Audio play failed:', e);
+      // Audio play failed silently
     }
   };
 

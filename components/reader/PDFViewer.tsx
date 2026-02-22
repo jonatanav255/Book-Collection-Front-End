@@ -173,9 +173,7 @@ export function PDFViewer({
           textLayerDiv.appendChild(textDiv);
         });
       } catch (err: any) {
-        if (err?.name !== 'RenderingCancelledException') {
-          console.error('Error rendering page:', err);
-        }
+        // Silently handle rendering errors (except cancellation which is expected)
       }
     };
 

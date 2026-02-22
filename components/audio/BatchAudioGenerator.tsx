@@ -51,7 +51,7 @@ export function BatchAudioGenerator({ bookId, onComplete, onError }: BatchAudioG
           }
         }
       } catch (err) {
-        console.error('Failed to poll batch generation status:', err);
+        // Silently handle polling errors
       }
     };
 
