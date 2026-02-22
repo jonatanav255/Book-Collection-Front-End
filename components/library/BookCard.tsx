@@ -18,6 +18,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -51,11 +52,16 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
         {/* Book Cover */}
         <Link href={`/reader/${book.id}`}>
           <div className="aspect-[3/4] relative bg-gray-200 dark:bg-gray-700 overflow-hidden">
+            {/* Shimmer placeholder */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+            )}
             <Image
               src={imageUrl}
               alt={book.title}
               fill
-              className="object-cover"
+              className={`object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setImageLoaded(true)}
               onError={() => setImageError(true)}
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
               quality={75}

@@ -55,16 +55,24 @@ export default function AllBooksPage() {
   const { uploadBook, uploadBooks, deleteBook, updateBookStatus } = useBooks(undefined, { skip: true });
   const { showToast } = useToast();
 
+  // Scroll to top on mount (navigating from home page)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Intersection Observer for infinite scroll
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
+
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
-          loadMore();
+        if (entries[0].isIntersecting) {
+          loadMoreRef.current();
         }
       },
       { rootMargin: '200px' }
@@ -72,7 +80,7 @@ export default function AllBooksPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMore, loadingMore, loading, loadMore]);
+  }, [books.length > 0]); // re-attach only when sentinel appears/disappears
 
   // Fetch stats from the stats endpoint
   const [stats, setStats] = useState({ total: 0, reading: 0, finished: 0, unread: 0 });

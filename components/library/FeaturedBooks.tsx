@@ -88,7 +88,7 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
         </div>
         <Link
           href="/library"
-          className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-gray-900 text-sm font-medium rounded-lg transition-colors shadow-sm"
         >
           View All
           <ChevronRight className="w-4 h-4" />
@@ -107,6 +107,7 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
 
 function FeaturedBookCard({ book }: { book: Book }) {
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const progress = book.status === 'FINISHED'
     ? 100
     : book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
@@ -120,11 +121,16 @@ function FeaturedBookCard({ book }: { book: Book }) {
       <div className="group cursor-pointer">
         {/* Book Cover */}
         <div className="aspect-[3/4] relative bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
+          {/* Shimmer placeholder */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+          )}
           <Image
             src={imageUrl}
             alt={book.title}
             fill
-            className="object-cover"
+            className={`object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
             quality={75}
