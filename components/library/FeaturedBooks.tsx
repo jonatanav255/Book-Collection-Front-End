@@ -83,7 +83,7 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Continue Reading</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Continue Reading</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Pick up where you left off</p>
         </div>
         <Link
@@ -96,7 +96,7 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
       </div>
 
       {/* Books Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
         {books.map((book) => (
           <FeaturedBookCard key={book.id} book={book} />
         ))}

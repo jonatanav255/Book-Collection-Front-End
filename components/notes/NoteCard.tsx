@@ -80,7 +80,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
           </span>
           <button
             onClick={() => onTogglePin(note.id, !note.pinned)}
-            className="p-0.5 rounded hover:bg-white/50 dark:hover:bg-black/20 transition-colors"
+            className="p-1.5 sm:p-0.5 rounded hover:bg-white/50 dark:hover:bg-black/20 transition-colors"
             title={note.pinned ? 'Unpin note' : 'Pin note'}
           >
             <Pin
@@ -92,7 +92,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
 
         <button
           onClick={() => setShowMenu(!showMenu)}
-          className="p-1 rounded hover:bg-white/50 dark:hover:bg-black/20 transition-colors"
+          className="p-2 sm:p-1 rounded hover:bg-white/50 dark:hover:bg-black/20 transition-colors"
         >
           <MoreVertical className="w-4 h-4" />
         </button>

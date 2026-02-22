@@ -177,7 +177,7 @@ export function PDFViewer({
   }
 
   return (
-    <div className="w-full h-full overflow-auto bg-gray-100 dark:bg-gray-950 p-4">
+    <div className="w-full h-full overflow-auto bg-gray-100 dark:bg-gray-950 p-1 sm:p-4">
       <div className="flex items-center justify-center min-w-full min-h-full">
         <div ref={containerRef} className="relative">
           <canvas

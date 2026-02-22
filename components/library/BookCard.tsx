@@ -147,7 +147,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
             {/* More Options Button */}
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             </button>
@@ -155,7 +155,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
 
           {/* Dropdown Menu */}
           {showMenu && (
-            <div ref={menuRef} className="absolute right-4 bottom-4 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 min-w-[180px]">
+            <div ref={menuRef} className="absolute right-0 bottom-4 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 min-w-[160px] sm:min-w-[180px]">
               {book.status !== 'FINISHED' && onStatusChange && (
                 <button
                   onClick={() => {

@@ -88,10 +88,10 @@ export function ReaderControls({
   }, [currentPage]);
 
   return (
-    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 relative z-20">
-      <div className="flex items-center justify-between gap-4">
+    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-2 py-2 sm:px-4 sm:py-3 relative z-20">
+      <div className="flex items-center justify-between gap-1 sm:gap-4">
         {/* Left: Navigation */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           {!isFullscreen && (
             <Link
               href="/"
@@ -119,9 +119,9 @@ export function ReaderControls({
               onChange={(e) => handlePageInputChange(e.target.value)}
               onBlur={handlePageInputSubmit}
               onKeyDown={(e) => e.key === 'Enter' && handlePageInputSubmit()}
-              className="w-16 px-2 py-1 text-center border border-gray-500 rounded bg-gray-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-12 sm:w-16 px-2 py-1 text-center border border-gray-500 rounded bg-gray-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <span className="text-sm text-white">
+            <span className="text-sm text-white hidden sm:inline">
               of {totalPages}
             </span>
           </div>
@@ -137,7 +137,7 @@ export function ReaderControls({
         </div>
 
         {/* Center: Zoom Controls */}
-        <div className="flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-2">
           <button
             onClick={handleZoomOut}
             disabled={scale <= 0.5}
@@ -162,7 +162,7 @@ export function ReaderControls({
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-0.5 sm:gap-2">
           {/* Timer icon - changes to different icon when running */}
           <button
             onClick={onToggleTimer}

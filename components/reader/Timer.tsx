@@ -311,7 +311,7 @@ export function Timer({ isOpen, onClose, compact = false, onRunningChange }: Tim
   // Show compact view when running but modal is closed
   if (isRunning && !isOpen) {
     return (
-      <div className="fixed top-3 right-48 z-50">
+      <div className="fixed top-3 right-2 sm:right-48 z-50">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg">
           <div className="text-sm font-mono font-semibold text-gray-900 dark:text-gray-100">
             {getCurrentTime()}
@@ -339,8 +339,8 @@ export function Timer({ isOpen, onClose, compact = false, onRunningChange }: Tim
         onClick={onClose}
       />
       {/* Timer modal */}
-      <div className="fixed top-4 right-8 z-50">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-80 p-4 border border-gray-200 dark:border-gray-700">
+      <div className="fixed top-4 right-2 left-2 sm:left-auto sm:right-8 z-50">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full sm:w-80 p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">

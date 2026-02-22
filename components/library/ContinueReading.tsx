@@ -18,15 +18,15 @@ export function ContinueReading({ book }: ContinueReadingProps) {
   const progress = book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
 
   return (
-    <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-6 text-white mb-8">
+    <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-4 sm:p-6 text-white mb-8">
       <div className="flex items-center gap-2 mb-4">
         <BookOpen className="w-5 h-5" />
         <h2 className="text-xl font-bold">Continue Reading</h2>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
         {/* Book Cover */}
-        <div className="w-32 h-48 flex-shrink-0 rounded-lg overflow-hidden shadow-lg">
+        <div className="w-24 h-36 sm:w-32 sm:h-48 flex-shrink-0 rounded-lg overflow-hidden shadow-lg">
           <Image
             src={book.coverUrl || booksApi.getThumbnailUrl(book.id)}
             alt={book.title}
@@ -40,7 +40,7 @@ export function ContinueReading({ book }: ContinueReadingProps) {
         {/* Book Info */}
         <div className="flex-1 flex flex-col justify-between">
           <div>
-            <h3 className="text-2xl font-bold mb-2">{book.title}</h3>
+            <h3 className="text-xl sm:text-2xl font-bold mb-2">{book.title}</h3>
             <p className="text-blue-100 mb-4">{book.author}</p>
 
             <div className="flex items-center gap-2 text-sm text-blue-100 mb-4">

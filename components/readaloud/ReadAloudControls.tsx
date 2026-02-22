@@ -38,7 +38,7 @@ export function ReadAloudControls({
   };
 
   return (
-    <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 border border-gray-200 dark:border-gray-700">
+    <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-gray-800 rounded-lg shadow-md p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
       {/* Play/Pause Button */}
       <button
         onClick={onTogglePlayPause}
@@ -76,7 +76,7 @@ export function ReadAloudControls({
 
       {/* Cached Indicator */}
       {isCached && !isLoading && !error && (
-        <div className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded text-xs text-green-700 dark:text-green-300">
+        <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded text-xs text-green-700 dark:text-green-300">
           <CheckCircle2 className="w-3 h-3" />
           <span>Cached</span>
         </div>
@@ -91,7 +91,7 @@ export function ReadAloudControls({
 
       {/* Info Note */}
       {!error && !isLoading && (
-        <div className="ml-auto">
+        <div className="ml-auto hidden sm:block">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Google Cloud TTS • Auto-advance enabled
           </p>

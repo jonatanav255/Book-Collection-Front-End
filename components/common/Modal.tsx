@@ -53,7 +53,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               {title}
             </h2>
@@ -67,7 +67,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         )}
 
         {/* Content */}
-        <div className="p-6">{children}</div>
+        <div className="p-4 sm:p-6">{children}</div>
       </div>
     </div>
   );

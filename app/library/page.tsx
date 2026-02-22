@@ -194,8 +194,8 @@ export default function AllBooksPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Link
               href="/"
               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
@@ -203,13 +203,13 @@ export default function AllBooksPage() {
             >
               <ArrowLeft className="w-6 h-6" style={{ color: 'var(--icon-color)' }} />
             </Link>
-            <div className="flex items-center gap-3">
-              <Library className="w-8 h-8" style={{ color: 'var(--icon-color-secondary)' }} />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Library className="w-7 h-7 sm:w-8 sm:h-8" style={{ color: 'var(--icon-color-secondary)' }} />
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                   All Books
                 </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   {stats.total} books • {stats.reading} reading • {stats.finished} finished
                 </p>
               </div>
@@ -248,7 +248,7 @@ export default function AllBooksPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
               {books.map((book) => (
                 <BookCard key={book.id} book={book} onDelete={handleDelete} onStatusChange={handleStatusChange} onRename={handleRename} />
               ))}
