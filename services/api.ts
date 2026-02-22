@@ -57,7 +57,7 @@ export const booksApi = {
     search?: string;
     sortBy?: string;
     status?: string;
-  }): Promise<PaginatedResponse<Book>> {
+  }, signal?: AbortSignal): Promise<PaginatedResponse<Book>> {
     const queryParams = new URLSearchParams();
     queryParams.append('page', params.page.toString());
     queryParams.append('size', params.size.toString());
@@ -65,7 +65,7 @@ export const booksApi = {
     if (params.sortBy) queryParams.append('sortBy', params.sortBy);
     if (params.status) queryParams.append('status', params.status);
 
-    const response = await fetch(`${API_URL}/books?${queryParams}`);
+    const response = await fetch(`${API_URL}/books?${queryParams}`, { signal });
     return handleResponse<PaginatedResponse<Book>>(response);
   },
 

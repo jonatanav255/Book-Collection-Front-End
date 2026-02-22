@@ -14,7 +14,7 @@ interface BookCardProps {
   onStatusChange?: (id: string, status: ReadingStatus) => void;
 }
 
-export function BookCard({ book, onDelete, onStatusChange }: BookCardProps) {
+export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusChange }: BookCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -58,7 +58,7 @@ export function BookCard({ book, onDelete, onStatusChange }: BookCardProps) {
               className="object-cover"
               onError={() => setImageError(true)}
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              quality={100}
+              quality={75}
               priority={false}
             />
 
@@ -154,4 +154,4 @@ export function BookCard({ book, onDelete, onStatusChange }: BookCardProps) {
       />
     </>
   );
-}
+});

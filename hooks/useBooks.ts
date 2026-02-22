@@ -12,19 +12,23 @@ export function useBooks(filters?: {
   const [loading, setLoading] = useState(!skip);
   const [error, setError] = useState<string | null>(null);
 
+  const search = filters?.search;
+  const sortBy = filters?.sortBy;
+  const status = filters?.status;
+
   const fetchBooks = useCallback(async () => {
     if (skip) return;
     try {
       setLoading(true);
       setError(null);
-      const data = await booksApi.list(filters);
+      const data = await booksApi.list({ search, sortBy, status });
       setBooks(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch books');
     } finally {
       setLoading(false);
     }
-  }, [filters, skip]);
+  }, [search, sortBy, status, skip]);
 
   useEffect(() => {
     fetchBooks();
@@ -35,7 +39,7 @@ export function useBooks(filters?: {
     if (skip) return;
     const refetchSilently = async () => {
       try {
-        const data = await booksApi.list(filters);
+        const data = await booksApi.list({ search, sortBy, status });
         setBooks(data);
       } catch {
         // silently ignore refetch errors
@@ -52,7 +56,7 @@ export function useBooks(filters?: {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [filters, skip]);
+  }, [search, sortBy, status, skip]);
 
   const uploadBook = useCallback(async (file: File) => {
     try {
@@ -171,8 +175,18 @@ export function usePaginatedBooks(filters: {
   const [page, setPage] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const initialLoadDone = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   const fetchPage = useCallback(async (pageNum: number, append: boolean) => {
+    // Cancel any in-flight request
+    if (!append) {
+      abortRef.current?.abort();
+    }
+    const controller = new AbortController();
+    if (!append) {
+      abortRef.current = controller;
+    }
+
     try {
       if (append) {
         setLoadingMore(true);
@@ -188,7 +202,7 @@ export function usePaginatedBooks(filters: {
         search: filters.search || undefined,
         sortBy: filters.sortBy || undefined,
         status: filters.status || undefined,
-      });
+      }, controller.signal);
 
       const content = data.content ?? [];
       setBooks(prev => append ? [...prev, ...content] : content);
@@ -196,8 +210,8 @@ export function usePaginatedBooks(filters: {
       setTotalElements(data.totalElements);
       setPage(data.number);
       initialLoadDone.current = true;
-    } catch {
-      // ignore errors silently
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -208,6 +222,7 @@ export function usePaginatedBooks(filters: {
   // Reset when filters change
   useEffect(() => {
     fetchPage(0, false);
+    return () => { abortRef.current?.abort(); };
   }, [fetchPage]);
 
   // Refetch on tab focus

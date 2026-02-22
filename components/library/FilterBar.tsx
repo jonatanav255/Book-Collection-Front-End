@@ -76,21 +76,21 @@ function CustomSelect({ value, onChange, options, label }: CustomSelectProps) {
   );
 }
 
-export function FilterBar({ sortBy, status, onSortChange, onStatusChange }: FilterBarProps) {
-  const sortOptions = [
-    { value: 'dateAdded', label: 'Date Added' },
-    { value: 'title', label: 'Title' },
-    { value: 'lastRead', label: 'Last Read' },
-    { value: 'progress', label: 'Progress' },
-  ];
+const sortOptions = [
+  { value: 'dateAdded', label: 'Date Added' },
+  { value: 'title', label: 'Title' },
+  { value: 'lastRead', label: 'Last Read' },
+  { value: 'progress', label: 'Progress' },
+];
 
-  const statusOptions = [
-    { value: '', label: 'All Books' },
-    { value: ReadingStatus.UNREAD, label: 'Unread' },
-    { value: ReadingStatus.READING, label: 'Reading' },
-    { value: ReadingStatus.FINISHED, label: 'Finished' },
-  ];
+const statusOptions = [
+  { value: '', label: 'All Books' },
+  { value: ReadingStatus.UNREAD, label: 'Unread' },
+  { value: ReadingStatus.READING, label: 'Reading' },
+  { value: ReadingStatus.FINISHED, label: 'Finished' },
+];
 
+export const FilterBar = React.memo(function FilterBar({ sortBy, status, onSortChange, onStatusChange }: FilterBarProps) {
   return (
     <div className="flex flex-wrap gap-4">
       {/* Sort By */}
@@ -113,11 +113,11 @@ export function FilterBar({ sortBy, status, onSortChange, onStatusChange }: Filt
         </label>
         <CustomSelect
           value={status}
-          onChange={onStatusChange}
+          onChange={onStatusChange as (value: string) => void}
           options={statusOptions}
           label="Status"
         />
       </div>
     </div>
   );
-}
+});

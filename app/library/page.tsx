@@ -138,7 +138,7 @@ export default function AllBooksPage() {
     showToast(parts.join(', '), failed > 0 ? 'error' : 'success');
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     try {
       await deleteBook(id);
       showToast('Book deleted successfully', 'success');
@@ -147,9 +147,9 @@ export default function AllBooksPage() {
     } catch (err) {
       showToast('Failed to delete book', 'error');
     }
-  };
+  }, [deleteBook, showToast, refetch, fetchStats]);
 
-  const handleStatusChange = async (id: string, status: ReadingStatus) => {
+  const handleStatusChange = useCallback(async (id: string, status: ReadingStatus) => {
     try {
       await updateBookStatus(id, status);
       showToast('Book status updated', 'success');
@@ -158,7 +158,7 @@ export default function AllBooksPage() {
     } catch (err) {
       showToast('Failed to update book status', 'error');
     }
-  };
+  }, [updateBookStatus, showToast, refetch, fetchStats]);
 
   if (loading) {
     return (

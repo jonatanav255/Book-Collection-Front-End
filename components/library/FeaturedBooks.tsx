@@ -127,7 +127,7 @@ function FeaturedBookCard({ book }: { book: Book }) {
             className="object-cover"
             onError={() => setImageError(true)}
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-            quality={100}
+            quality={75}
             priority={false}
           />
 

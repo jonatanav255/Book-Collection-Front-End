@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Search, X } from 'lucide-react';
 
 interface SearchBarProps {
@@ -9,7 +9,7 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
-export function SearchBar({ value, onChange, placeholder = 'Search books...' }: SearchBarProps) {
+export const SearchBar = React.memo(function SearchBar({ value, onChange, placeholder = 'Search books...' }: SearchBarProps) {
   return (
     <div className="relative">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -30,4 +30,4 @@ export function SearchBar({ value, onChange, placeholder = 'Search books...' }: 
       )}
     </div>
   );
-}
+});
