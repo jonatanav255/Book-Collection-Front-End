@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Library, Settings as SettingsIcon, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useBooks } from '@/hooks/useBooks';
+import { useBooks, usePaginatedBooks } from '@/hooks/useBooks';
 import { useToast } from '@/components/common/Toast';
 import { BookCard } from '@/components/library/BookCard';
 import { SearchBar } from '@/components/library/SearchBar';
@@ -16,6 +16,15 @@ import { BatchUploadProgress } from '@/components/library/BatchUploadProgress';
 import { ReadingStatus } from '@/types';
 import type { BatchUploadFileResult } from '@/types';
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function AllBooksPage() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('dateAdded');
@@ -27,8 +36,67 @@ export default function AllBooksPage() {
   const [batchComplete, setBatchComplete] = useState(false);
   const [showBatchModal, setShowBatchModal] = useState(false);
 
-  const { books, loading, uploadBook, uploadBooks, deleteBook, updateBookStatus } = useBooks();
+  const debouncedSearch = useDebounce(search, 150);
+
+  const {
+    books,
+    loading,
+    loadingMore,
+    hasMore,
+    totalElements,
+    loadMore,
+    refetch,
+  } = usePaginatedBooks({
+    search: debouncedSearch,
+    sortBy,
+    status: statusFilter || undefined,
+  });
+
+  const { uploadBook, uploadBooks, deleteBook, updateBookStatus } = useBooks(undefined, { skip: true });
   const { showToast } = useToast();
+
+  // Intersection Observer for infinite scroll
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          loadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loading, loadMore]);
+
+  // Fetch stats from the stats endpoint
+  const [stats, setStats] = useState({ total: 0, reading: 0, finished: 0, unread: 0 });
+  const fetchStats = useCallback(async () => {
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+      const res = await fetch(`${API_URL}/books/stats`);
+      if (res.ok) {
+        const data = await res.json();
+        setStats({
+          total: data.totalBooks ?? 0,
+          reading: data.readingBooks ?? 0,
+          finished: data.finishedBooks ?? 0,
+          unread: data.unreadBooks ?? 0,
+        });
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const handleUpload = async (files: File[]) => {
     if (files.length === 1) {
@@ -36,6 +104,8 @@ export default function AllBooksPage() {
         setUploading(true);
         await uploadBook(files[0]);
         showToast('Book uploaded successfully!', 'success');
+        refetch();
+        fetchStats();
       } catch (err) {
         showToast('Failed to upload book. Please try again.', 'error');
       } finally {
@@ -56,6 +126,8 @@ export default function AllBooksPage() {
 
     setBatchResults([...results]);
     setBatchComplete(true);
+    refetch();
+    fetchStats();
 
     const uploaded = results.filter((r) => r.status === 'success').length;
     const skipped = results.filter((r) => r.status === 'skipped').length;
@@ -70,6 +142,8 @@ export default function AllBooksPage() {
     try {
       await deleteBook(id);
       showToast('Book deleted successfully', 'success');
+      refetch();
+      fetchStats();
     } catch (err) {
       showToast('Failed to delete book', 'error');
     }
@@ -79,61 +153,12 @@ export default function AllBooksPage() {
     try {
       await updateBookStatus(id, status);
       showToast('Book status updated', 'success');
+      refetch();
+      fetchStats();
     } catch (err) {
       showToast('Failed to update book status', 'error');
     }
   };
-
-  // Filter and sort books
-  const filteredBooks = useMemo(() => {
-    let result = [...books];
-
-    // Apply search filter
-    if (search) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(
-        (book) =>
-          book.title.toLowerCase().includes(searchLower) ||
-          (book.author || '').toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply status filter
-    if (statusFilter) {
-      result = result.filter((book) => book.status === statusFilter);
-    }
-
-    // Apply sorting
-    result.sort((a, b) => {
-      switch (sortBy) {
-        case 'title':
-          return a.title.localeCompare(b.title);
-        case 'lastRead':
-          return (
-            new Date(b.lastReadAt || 0).getTime() -
-            new Date(a.lastReadAt || 0).getTime()
-          );
-        case 'progress':
-          const progressA = a.pageCount > 0 ? a.currentPage / a.pageCount : 0;
-          const progressB = b.pageCount > 0 ? b.currentPage / b.pageCount : 0;
-          return progressB - progressA;
-        default: // dateAdded
-          return (
-            new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime()
-          );
-      }
-    });
-
-    return result;
-  }, [books, search, statusFilter, sortBy]);
-
-  // Calculate statistics
-  const stats = useMemo(() => {
-    const finished = books.filter((b) => b.status === ReadingStatus.FINISHED).length;
-    const reading = books.filter((b) => b.status === ReadingStatus.READING).length;
-    const unread = books.filter((b) => b.status === ReadingStatus.UNREAD).length;
-    return { finished, reading, unread, total: books.length };
-  }, [books]);
 
   if (loading) {
     return (
@@ -200,27 +225,32 @@ export default function AllBooksPage() {
         </div>
 
         {/* Books Grid */}
-        {filteredBooks.length === 0 ? (
+        {books.length === 0 ? (
           <div className="text-center py-16">
             <Library className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              {books.length === 0 ? 'No books yet' : 'No books found'}
+              {totalElements === 0 && !debouncedSearch && !statusFilter ? 'No books yet' : 'No books found'}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {books.length === 0
+              {totalElements === 0 && !debouncedSearch && !statusFilter
                 ? 'Upload your first PDF to get started'
                 : 'Try adjusting your search or filters'}
             </p>
-            {books.length === 0 && (
+            {totalElements === 0 && !debouncedSearch && !statusFilter && (
               <UploadButton onUpload={handleUpload} isLoading={uploading} />
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {filteredBooks.map((book) => (
-              <BookCard key={book.id} book={book} onDelete={handleDelete} onStatusChange={handleStatusChange} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {books.map((book) => (
+                <BookCard key={book.id} book={book} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+              ))}
+              {loadingMore &&
+                [...Array(4)].map((_, i) => <BookCardSkeleton key={`skeleton-${i}`} />)}
+            </div>
+            <div ref={sentinelRef} className="h-4" />
+          </>
         )}
       </div>
 

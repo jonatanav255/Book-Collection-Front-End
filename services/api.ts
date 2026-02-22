@@ -8,6 +8,7 @@ import type {
   UpdatePreferencesRequest,
   GoogleBooksCandidate,
   LibraryExport,
+  PaginatedResponse,
 } from '@/types';
 
 // Base URL should be http://localhost:8080/api (the /api prefix is included)
@@ -48,6 +49,24 @@ export const booksApi = {
     const url = `${API_URL}/books${queryParams.toString() ? `?${queryParams}` : ''}`;
     const response = await fetch(url);
     return handleResponse<Book[]>(response);
+  },
+
+  async listPaged(params: {
+    page: number;
+    size: number;
+    search?: string;
+    sortBy?: string;
+    status?: string;
+  }): Promise<PaginatedResponse<Book>> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', params.page.toString());
+    queryParams.append('size', params.size.toString());
+    if (params.search) queryParams.append('search', params.search);
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params.status) queryParams.append('status', params.status);
+
+    const response = await fetch(`${API_URL}/books?${queryParams}`);
+    return handleResponse<PaginatedResponse<Book>>(response);
   },
 
   async getById(id: string): Promise<Book> {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { booksApi, ApiError } from '@/services/api';
 import type { Book, ReadingStatus, BatchUploadFileResult } from '@/types';
 
@@ -6,12 +6,14 @@ export function useBooks(filters?: {
   search?: string;
   sortBy?: string;
   status?: ReadingStatus;
-}) {
+}, options?: { skip?: boolean }) {
+  const skip = options?.skip ?? false;
   const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!skip);
   const [error, setError] = useState<string | null>(null);
 
   const fetchBooks = useCallback(async () => {
+    if (skip) return;
     try {
       setLoading(true);
       setError(null);
@@ -22,7 +24,7 @@ export function useBooks(filters?: {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, skip]);
 
   useEffect(() => {
     fetchBooks();
@@ -30,6 +32,7 @@ export function useBooks(filters?: {
 
   // Refetch silently when user returns (tab switch or window focus from in-app navigation)
   useEffect(() => {
+    if (skip) return;
     const refetchSilently = async () => {
       try {
         const data = await booksApi.list(filters);
@@ -49,7 +52,7 @@ export function useBooks(filters?: {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [filters]);
+  }, [filters, skip]);
 
   const uploadBook = useCallback(async (file: File) => {
     try {
@@ -150,6 +153,91 @@ export function useBooks(filters?: {
     deleteBook,
     updateBook,
     updateBookStatus,
+  };
+}
+
+const PAGE_SIZE = 10;
+
+export function usePaginatedBooks(filters: {
+  search?: string;
+  sortBy?: string;
+  status?: string;
+}) {
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const initialLoadDone = useRef(false);
+
+  const fetchPage = useCallback(async (pageNum: number, append: boolean) => {
+    try {
+      if (append) {
+        setLoadingMore(true);
+      } else if (!initialLoadDone.current) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
+
+      const data = await booksApi.listPaged({
+        page: pageNum,
+        size: PAGE_SIZE,
+        search: filters.search || undefined,
+        sortBy: filters.sortBy || undefined,
+        status: filters.status || undefined,
+      });
+
+      const content = data.content ?? [];
+      setBooks(prev => append ? [...prev, ...content] : content);
+      setHasMore(!data.last);
+      setTotalElements(data.totalElements);
+      setPage(data.number);
+      initialLoadDone.current = true;
+    } catch {
+      // ignore errors silently
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+      setLoadingMore(false);
+    }
+  }, [filters.search, filters.sortBy, filters.status]);
+
+  // Reset when filters change
+  useEffect(() => {
+    fetchPage(0, false);
+  }, [fetchPage]);
+
+  // Refetch on tab focus
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) fetchPage(0, false);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [fetchPage]);
+
+  const loadMore = useCallback(() => {
+    if (!loadingMore && hasMore) {
+      fetchPage(page + 1, true);
+    }
+  }, [loadingMore, hasMore, page, fetchPage]);
+
+  const refetch = useCallback(() => {
+    fetchPage(0, false);
+  }, [fetchPage]);
+
+  return {
+    books,
+    loading,
+    refreshing,
+    loadingMore,
+    hasMore,
+    totalElements,
+    loadMore,
+    refetch,
   };
 }
 

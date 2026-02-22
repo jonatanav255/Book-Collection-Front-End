@@ -91,6 +91,15 @@ export interface UpdatePreferencesRequest {
 }
 
 // API Response Types
+export interface PaginatedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  last: boolean;
+}
+
 export interface BooksListResponse {
   books: Book[];
 }

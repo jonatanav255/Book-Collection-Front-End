@@ -19,7 +19,7 @@ export default function HomePage() {
   const [batchComplete, setBatchComplete] = useState(false);
   const [showBatchModal, setShowBatchModal] = useState(false);
 
-  const { uploadBook, uploadBooks } = useBooks();
+  const { uploadBook, uploadBooks } = useBooks(undefined, { skip: true });
   const { showToast } = useToast();
 
   const handleUpload = async (files: File[]) => {
