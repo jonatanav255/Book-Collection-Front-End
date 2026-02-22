@@ -31,6 +31,27 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
     };
 
     fetchFeaturedBooks();
+
+    // Refetch silently when user returns (tab switch or window focus from in-app navigation)
+    const refetchSilently = async () => {
+      try {
+        const featuredBooks = await booksApi.getFeatured(limit);
+        setBooks(featuredBooks);
+      } catch {
+        // silently ignore refetch errors
+      }
+    };
+    const handleVisibilityChange = () => {
+      if (!document.hidden) refetchSilently();
+    };
+    const handleFocus = () => refetchSilently();
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [limit]);
 
   if (loading) {
@@ -86,7 +107,9 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
 
 function FeaturedBookCard({ book }: { book: Book }) {
   const [imageError, setImageError] = useState(false);
-  const progress = book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
+  const progress = book.status === 'FINISHED'
+    ? 100
+    : book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
 
   const imageUrl = imageError || !book.coverUrl
     ? booksApi.getThumbnailUrl(book.id)
@@ -113,11 +136,13 @@ function FeaturedBookCard({ book }: { book: Book }) {
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
               <div className="w-full bg-gray-300/50 rounded-full h-1.5 overflow-hidden">
                 <div
-                  className="bg-blue-500 h-full transition-all"
+                  className={`h-full transition-all ${book.status === 'FINISHED' ? 'bg-green-500' : 'bg-blue-500'}`}
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="text-white text-xs mt-1 font-medium">{progress}%</p>
+              <p className="text-white text-xs mt-1 font-medium">
+                {book.status === 'FINISHED' ? 'Complete' : `${progress}%`}
+              </p>
             </div>
           )}
         </div>

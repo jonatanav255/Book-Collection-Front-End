@@ -28,6 +28,29 @@ export function useBooks(filters?: {
     fetchBooks();
   }, [fetchBooks]);
 
+  // Refetch silently when user returns (tab switch or window focus from in-app navigation)
+  useEffect(() => {
+    const refetchSilently = async () => {
+      try {
+        const data = await booksApi.list(filters);
+        setBooks(data);
+      } catch {
+        // silently ignore refetch errors
+      }
+    };
+    const handleVisibilityChange = () => {
+      if (!document.hidden) refetchSilently();
+    };
+    const handleFocus = () => refetchSilently();
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [filters]);
+
   const uploadBook = useCallback(async (file: File) => {
     try {
       const newBook = await booksApi.upload(file);
@@ -61,15 +84,23 @@ export function useBooks(filters?: {
 
   const updateBookStatus = useCallback(async (id: string, status: ReadingStatus) => {
     try {
-      const updated = await booksApi.update(id, { status });
+      const book = books.find(b => b.id === id);
+      const updates: any = { status };
+
+      if (status === 'FINISHED' && book && book.pageCount > 0) {
+        updates.currentPage = book.pageCount;
+      }
+
+      const updated = await booksApi.update(id, updates);
       setBooks((prev) =>
         prev.map((book) => (book.id === id ? updated : book))
       );
+
       return updated;
     } catch (err) {
       throw err;
     }
-  }, []);
+  }, [books]);
 
   return {
     books,
