@@ -32,14 +32,14 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 bg-gray-800 dark:bg-gray-800 px-6 py-4 rounded-lg">
           <div className="flex items-center gap-3">
-            <Library className="w-8 h-8" style={{ color: 'var(--icon-color-secondary)' }} />
+            <Library className="w-8 h-8 text-blue-400" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              <h1 className="text-3xl font-bold text-white">
                 BookShelf
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-300">
                 Your personal reading collection
               </p>
             </div>
@@ -48,10 +48,10 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowSettings(true)}
-              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
               title="Settings"
             >
-              <SettingsIcon className="w-6 h-6" style={{ color: 'var(--icon-color)' }} />
+              <SettingsIcon className="w-6 h-6 text-gray-300" />
             </button>
             <UploadButton onUpload={handleUpload} isLoading={uploading} />
           </div>

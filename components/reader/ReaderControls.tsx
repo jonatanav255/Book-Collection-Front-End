@@ -88,7 +88,7 @@ export function ReaderControls({
   }, [currentPage]);
 
   return (
-    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 relative z-20">
       <div className="flex items-center justify-between gap-4">
         {/* Left: Navigation */}
         <div className="flex items-center gap-3">
@@ -113,13 +113,12 @@ export function ReaderControls({
 
           <div className="flex items-center gap-2">
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={pageInput}
               onChange={(e) => handlePageInputChange(e.target.value)}
               onBlur={handlePageInputSubmit}
               onKeyDown={(e) => e.key === 'Enter' && handlePageInputSubmit()}
-              min="1"
-              max={totalPages}
               className="w-16 px-2 py-1 text-center border border-gray-500 rounded bg-gray-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <span className="text-sm text-white">

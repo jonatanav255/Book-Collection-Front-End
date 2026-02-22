@@ -212,9 +212,9 @@ export function PDFViewer({
         <div ref={containerRef} className="relative">
           <canvas
             ref={canvasRef}
-            className="shadow-2xl"
             style={{
               filter: 'var(--pdf-filter, none)',
+              boxShadow: '0 0 20px 10px rgba(0, 0, 0, 0.05)',
             }}
           />
           <div

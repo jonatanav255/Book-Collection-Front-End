@@ -63,7 +63,7 @@ function CustomSelect({ value, onChange, options, label }: CustomSelectProps) {
               }}
               className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
                 option.value === value
-                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                  ? 'bg-blue-500 dark:bg-blue-600 text-white'
                   : 'text-gray-900 dark:text-gray-100'
               }`}
             >
