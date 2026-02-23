@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'api.books.jonathan-dev.com',
+        hostname: 'bookshelf-api.jonathan-dev.com',
         pathname: '/api/books/**',
       },
       {
