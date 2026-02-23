@@ -53,10 +53,10 @@ export default function AllBooksPage() {
   const { uploadBook, uploadBooks, deleteBook, updateBookStatus, updateBook } = useBooks(undefined, { skip: true });
   const { showToast } = useToast();
 
-  // Scroll to top on mount (navigating from home page)
+  // Scroll to top on mount and when search/filters change
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+  }, [debouncedSearch, sortBy, statusFilter]);
 
   // Intersection Observer for infinite scroll
   const sentinelRef = useRef<HTMLDivElement>(null);
