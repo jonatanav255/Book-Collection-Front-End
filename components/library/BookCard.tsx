@@ -170,7 +170,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
                     onStatusChange(book.id, ReadingStatus.UNREAD);
                     setShowMenu(false);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left rounded-t-lg"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left rounded-t-lg"
                 >
                   <BookX className="w-4 h-4" />
                   Mark as Unread
