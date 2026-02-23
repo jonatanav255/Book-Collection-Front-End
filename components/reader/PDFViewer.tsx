@@ -154,7 +154,6 @@ export function PDFViewer({
         const textLayerDiv = textLayerRef.current;
         if (textLayerDiv) {
           textLayerDiv.innerHTML = '';
-          // Set --scale-factor used by pdfjs TextLayer for positioning
           textLayerDiv.style.setProperty('--scale-factor', String(viewport.scale));
 
           const textContent = await page.getTextContent();
