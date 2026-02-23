@@ -13,6 +13,7 @@ import { BookCardSkeleton } from '@/components/common/Loading';
 import { BatchUploadProgress } from '@/components/library/BatchUploadProgress';
 import { ReadingStatus } from '@/types';
 import type { BatchUploadFileResult } from '@/types';
+import { ApiError } from '@/services/api';
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -112,7 +113,11 @@ export default function AllBooksPage() {
         refetch();
         fetchStats();
       } catch (err) {
-        showToast('Failed to upload book. Please try again.', 'error');
+        if (err instanceof ApiError && err.status === 409) {
+          showToast('This book already exists in your library.', 'error');
+        } else {
+          showToast('Failed to upload book. Please try again.', 'error');
+        }
       } finally {
         setUploading(false);
       }

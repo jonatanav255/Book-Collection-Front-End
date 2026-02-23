@@ -8,7 +8,7 @@ import type { Preferences } from '@/types';
 const DEFAULT_PREFERENCES: Preferences = {
   id: 'default',
   theme: ThemePreset.DARK,
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif',
   fontSize: FontSize.MD,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -39,15 +39,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Apply theme to document
   useEffect(() => {
-    if (!preferences) return;
-
+    const effective = preferences ?? DEFAULT_PREFERENCES;
     const root = document.documentElement;
 
     // Remove all theme classes first
     root.classList.remove('theme-light', 'theme-dark', 'dark');
 
     // Apply selected theme
-    switch (preferences.theme) {
+    switch (effective.theme) {
       case ThemePreset.LIGHT:
         root.classList.add('theme-light');
         break;
@@ -57,7 +56,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Apply font family
-    root.style.setProperty('--font-family', preferences.fontFamily);
+    root.style.setProperty('--font-family', effective.fontFamily);
 
     // Apply font size
     const fontSizes = {
@@ -66,7 +65,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       lg: '18px',
       xl: '20px',
     };
-    root.style.setProperty('--font-size', fontSizes[preferences.fontSize]);
+    root.style.setProperty('--font-size', fontSizes[effective.fontSize]);
   }, [preferences]);
 
   // Wrap the preference setters to match the interface

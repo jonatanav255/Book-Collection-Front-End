@@ -121,7 +121,7 @@ export function NoteEditor({ isOpen, onClose, onSave, currentPage, editingNote }
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full ${c.color}`} />
-                <span className="text-sm">{c.label}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{c.label}</span>
               </button>
             ))}
           </div>

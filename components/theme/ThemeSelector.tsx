@@ -32,7 +32,7 @@ export function ThemeSelector() {
                 className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all flex flex-col items-center gap-2 ${
                   isActive
                     ? 'border-blue-500 bg-blue-600 text-white'
-                    : 'border-gray-500 dark:border-gray-500 bg-gray-700 dark:bg-gray-700 text-gray-200 dark:text-gray-200 hover:bg-gray-600 dark:hover:bg-gray-600'
+                    : 'border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 <Icon className="w-5 h-5" />

@@ -17,6 +17,7 @@ export type TimerMode = 'countdown' | 'countup' | 'pomodoro';
 interface TimerProps {
   isOpen: boolean;  // Whether the timer modal is visible
   onClose: () => void;  // Callback to close the timer modal
+  onOpen?: () => void;  // Callback to reopen the timer modal from compact view
   compact?: boolean;  // If true, render compact navbar version (when running)
   onRunningChange?: (isRunning: boolean) => void;  // Callback when timer running state changes
 }
@@ -45,7 +46,7 @@ interface PomodoroSettings {
  * - Progress bars for countdown/Pomodoro modes
  * - Session tracking for Pomodoro
  */
-export function Timer({ isOpen, onClose, compact = false, onRunningChange }: TimerProps) {
+export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChange }: TimerProps) {
   // Timer mode and running state
   const [mode, setMode] = useState<TimerMode>('countdown');
   const [isRunning, setIsRunning] = useState(false);
@@ -313,9 +314,13 @@ export function Timer({ isOpen, onClose, compact = false, onRunningChange }: Tim
     return (
       <div className="fixed top-3 right-2 sm:right-48 z-50">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg">
-          <div className="text-sm font-mono font-semibold text-gray-900 dark:text-gray-100">
+          <button
+            onClick={onOpen}
+            className="text-sm font-mono font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            title="Open timer"
+          >
             {getCurrentTime()}
-          </div>
+          </button>
           <button
             onClick={() => setIsRunning(false)}
             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
@@ -428,8 +433,18 @@ export function Timer({ isOpen, onClose, compact = false, onRunningChange }: Tim
                 inputMode="numeric"
                 value={Math.floor(countdownTotalSeconds / 60).toString()}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-                  const minutes = Math.max(0, Math.min(180, parseInt(value) || 0));
+                  const raw = e.target.value.replace(/\D/g, '');
+                  if (raw === '') {
+                    const seconds = countdownTotalSeconds % 60;
+                    setCountdownTotalSeconds(seconds);
+                    return;
+                  }
+                  const minutes = parseInt(raw);
+                  const seconds = countdownTotalSeconds % 60;
+                  setCountdownTotalSeconds(minutes * 60 + seconds);
+                }}
+                onBlur={() => {
+                  const minutes = Math.max(0, Math.min(180, Math.floor(countdownTotalSeconds / 60)));
                   const seconds = countdownTotalSeconds % 60;
                   setCountdownTotalSeconds(minutes * 60 + seconds);
                 }}
@@ -443,9 +458,19 @@ export function Timer({ isOpen, onClose, compact = false, onRunningChange }: Tim
                 inputMode="numeric"
                 value={(countdownTotalSeconds % 60).toString()}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                  const raw = e.target.value.replace(/\D/g, '');
+                  if (raw === '') {
+                    const minutes = Math.floor(countdownTotalSeconds / 60);
+                    setCountdownTotalSeconds(minutes * 60);
+                    return;
+                  }
                   const minutes = Math.floor(countdownTotalSeconds / 60);
-                  const seconds = Math.max(0, Math.min(59, parseInt(value) || 0));
+                  const seconds = parseInt(raw);
+                  setCountdownTotalSeconds(minutes * 60 + seconds);
+                }}
+                onBlur={() => {
+                  const minutes = Math.floor(countdownTotalSeconds / 60);
+                  const seconds = Math.max(0, Math.min(59, countdownTotalSeconds % 60));
                   setCountdownTotalSeconds(minutes * 60 + seconds);
                 }}
                 className="w-16 px-2 py-1.5 text-sm text-center border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -470,12 +495,21 @@ export function Timer({ isOpen, onClose, compact = false, onRunningChange }: Tim
               <div>
                 <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Work (min)</label>
                 <input
-                  type="number"
-                  min="1"
-                  max="90"
+                  type="text"
+                  inputMode="numeric"
                   value={pomodoroSettings.workMinutes}
                   onChange={(e) => {
-                    const value = Math.max(1, Math.min(90, parseInt(e.target.value) || 25));
+                    const raw = e.target.value.replace(/\D/g, '');
+                    if (raw === '') return;
+                    const value = parseInt(raw);
+                    setPomodoroSettings({ ...pomodoroSettings, workMinutes: value });
+                    if (pomodoroPhase === 'work') {
+                      setPomodoroSeconds(value * 60);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '');
+                    const value = Math.max(1, Math.min(90, parseInt(raw) || 25));
                     setPomodoroSettings({ ...pomodoroSettings, workMinutes: value });
                     if (pomodoroPhase === 'work') {
                       setPomodoroSeconds(value * 60);
@@ -487,12 +521,17 @@ export function Timer({ isOpen, onClose, compact = false, onRunningChange }: Tim
               <div>
                 <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Short break (min)</label>
                 <input
-                  type="number"
-                  min="1"
-                  max="30"
+                  type="text"
+                  inputMode="numeric"
                   value={pomodoroSettings.shortBreakMinutes}
                   onChange={(e) => {
-                    const value = Math.max(1, Math.min(30, parseInt(e.target.value) || 5));
+                    const raw = e.target.value.replace(/\D/g, '');
+                    if (raw === '') return;
+                    setPomodoroSettings({ ...pomodoroSettings, shortBreakMinutes: parseInt(raw) });
+                  }}
+                  onBlur={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '');
+                    const value = Math.max(1, Math.min(30, parseInt(raw) || 5));
                     setPomodoroSettings({ ...pomodoroSettings, shortBreakMinutes: value });
                   }}
                   className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -501,12 +540,17 @@ export function Timer({ isOpen, onClose, compact = false, onRunningChange }: Tim
               <div>
                 <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Long break (min)</label>
                 <input
-                  type="number"
-                  min="1"
-                  max="60"
+                  type="text"
+                  inputMode="numeric"
                   value={pomodoroSettings.longBreakMinutes}
                   onChange={(e) => {
-                    const value = Math.max(1, Math.min(60, parseInt(e.target.value) || 15));
+                    const raw = e.target.value.replace(/\D/g, '');
+                    if (raw === '') return;
+                    setPomodoroSettings({ ...pomodoroSettings, longBreakMinutes: parseInt(raw) });
+                  }}
+                  onBlur={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '');
+                    const value = Math.max(1, Math.min(60, parseInt(raw) || 15));
                     setPomodoroSettings({ ...pomodoroSettings, longBreakMinutes: value });
                   }}
                   className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -515,12 +559,17 @@ export function Timer({ isOpen, onClose, compact = false, onRunningChange }: Tim
               <div>
                 <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Sessions until long break</label>
                 <input
-                  type="number"
-                  min="2"
-                  max="10"
+                  type="text"
+                  inputMode="numeric"
                   value={pomodoroSettings.sessionsUntilLongBreak}
                   onChange={(e) => {
-                    const value = Math.max(2, Math.min(10, parseInt(e.target.value) || 4));
+                    const raw = e.target.value.replace(/\D/g, '');
+                    if (raw === '') return;
+                    setPomodoroSettings({ ...pomodoroSettings, sessionsUntilLongBreak: parseInt(raw) });
+                  }}
+                  onBlur={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '');
+                    const value = Math.max(2, Math.min(10, parseInt(raw) || 4));
                     setPomodoroSettings({ ...pomodoroSettings, sessionsUntilLongBreak: value });
                   }}
                   className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"

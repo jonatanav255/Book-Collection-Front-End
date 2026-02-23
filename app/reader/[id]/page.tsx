@@ -271,7 +271,7 @@ export default function ReaderPage() {
       />
 
       {/* Timer - shows modal when open, compact view when running and closed */}
-      <Timer isOpen={showTimer} onClose={() => setShowTimer(false)} onRunningChange={setIsTimerRunning} />
+      <Timer isOpen={showTimer} onClose={() => setShowTimer(false)} onOpen={() => setShowTimer(true)} onRunningChange={setIsTimerRunning} />
 
       {/* Settings Modal */}
       <Modal

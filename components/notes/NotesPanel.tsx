@@ -86,7 +86,7 @@ export function NotesPanel({
             onClick={onClose}
             className="p-2 sm:p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
         </div>
 
@@ -103,8 +103,8 @@ export function NotesPanel({
               className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               title={sortAscending ? 'Sort: Page 1 → Last. Click to reverse' : 'Sort: Last → Page 1. Click to reverse'}
             >
-              <ArrowUpDown className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">
+              <ArrowUpDown className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                 {sortAscending ? '1 → Last' : 'Last → 1'}
               </span>
             </button>
@@ -113,8 +113,8 @@ export function NotesPanel({
               className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               title="Download notes as text file"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">Export</span>
+              <Download className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Export</span>
             </button>
           </div>
         </div>
