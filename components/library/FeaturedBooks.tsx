@@ -96,7 +96,7 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
       </div>
 
       {/* Books Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
         {books.map((book) => (
           <FeaturedBookCard key={book.id} book={book} />
         ))}
@@ -113,9 +113,12 @@ function FeaturedBookCard({ book }: { book: Book }) {
     ? 100
     : book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
 
-  const imageUrl = imageError || !book.coverUrl
+  const googleCoverUrl = book.coverUrl
+    ? book.coverUrl.replace('zoom=1', 'zoom=2').replace('&edge=curl', '')
+    : null;
+  const imageUrl = imageError || !googleCoverUrl
     ? booksApi.getThumbnailUrl(book.id)
-    : book.coverUrl;
+    : googleCoverUrl;
 
   return (
     <Link href={`/reader/${book.id}`} onClick={() => setIsOpening(true)}>
@@ -131,7 +134,14 @@ function FeaturedBookCard({ book }: { book: Book }) {
             alt={book.title}
             fill
             className={`object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-            onLoad={() => setImageLoaded(true)}
+            onLoad={(e) => {
+              const img = e.target as HTMLImageElement;
+              if (googleCoverUrl && !imageError && img.naturalWidth < 150) {
+                setImageError(true);
+              } else {
+                setImageLoaded(true);
+              }
+            }}
             onError={() => setImageError(true)}
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
             quality={75}

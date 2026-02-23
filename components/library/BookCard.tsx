@@ -47,9 +47,12 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
     ? 100
     : book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
 
-  const imageUrl = imageError || !book.coverUrl
+  const googleCoverUrl = book.coverUrl
+    ? book.coverUrl.replace('zoom=1', 'zoom=2').replace('&edge=curl', '')
+    : null;
+  const imageUrl = imageError || !googleCoverUrl
     ? booksApi.getThumbnailUrl(book.id)
-    : book.coverUrl;
+    : googleCoverUrl;
 
   return (
     <>
@@ -66,7 +69,14 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
               alt={book.title}
               fill
               className={`object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={() => setImageLoaded(true)}
+              onLoad={(e) => {
+                const img = e.target as HTMLImageElement;
+                if (googleCoverUrl && !imageError && img.naturalWidth < 150) {
+                  setImageError(true);
+                } else {
+                  setImageLoaded(true);
+                }
+              }}
               onError={() => setImageError(true)}
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
               quality={75}

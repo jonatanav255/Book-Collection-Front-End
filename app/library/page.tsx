@@ -185,7 +185,7 @@ export default function AllBooksPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="max-w-7xl mx-auto">
           <div className="h-12 w-64 bg-gray-200 dark:bg-gray-700 rounded mb-8 animate-pulse" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {[...Array(10)].map((_, i) => (
               <BookCardSkeleton key={i} />
             ))}
@@ -206,7 +206,7 @@ export default function AllBooksPage() {
               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               title="Back to Home"
             >
-              <ArrowLeft className="w-6 h-6" style={{ color: 'var(--icon-color)' }} />
+              <ArrowLeft className="w-6 h-6 text-gray-600 dark:text-gray-300" />
             </Link>
             <div className="flex items-center gap-2 sm:gap-3">
               <Library className="w-7 h-7 sm:w-8 sm:h-8" style={{ color: 'var(--icon-color-secondary)' }} />
@@ -253,7 +253,7 @@ export default function AllBooksPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
               {books.map((book) => (
                 <BookCard key={book.id} book={book} onDelete={handleDelete} onStatusChange={handleStatusChange} onRename={handleRename} />
               ))}

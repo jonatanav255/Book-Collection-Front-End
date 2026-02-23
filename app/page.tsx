@@ -77,7 +77,7 @@ export default function HomePage() {
 
         {/* Featured Books - Recently Read */}
         <div className="mb-8">
-          <FeaturedBooks limit={6} />
+          <FeaturedBooks limit={5} />
         </div>
       </div>
 
