@@ -134,6 +134,8 @@ export function useBooks(filters?: {
 
       if (status === 'FINISHED' && book && book.pageCount > 0) {
         updates.currentPage = book.pageCount;
+      } else if (status === 'UNREAD') {
+        updates.currentPage = 0;
       }
 
       const updated = await booksApi.update(id, updates);

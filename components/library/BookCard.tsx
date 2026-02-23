@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Trash2, MoreVertical, CheckCircle, Pencil, Loader2 } from 'lucide-react';
+import { Trash2, MoreVertical, CheckCircle, BookOpen, BookX, Pencil, Loader2 } from 'lucide-react';
 import { Book, ReadingStatus } from '@/types';
 import { booksApi } from '@/services/api';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -164,13 +164,37 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
           {/* Dropdown Menu */}
           {showMenu && (
             <div ref={menuRef} className="absolute right-0 bottom-4 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 min-w-[160px] sm:min-w-[180px]">
+              {book.status !== 'UNREAD' && onStatusChange && (
+                <button
+                  onClick={() => {
+                    onStatusChange(book.id, ReadingStatus.UNREAD);
+                    setShowMenu(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left rounded-t-lg"
+                >
+                  <BookX className="w-4 h-4" />
+                  Mark as Unread
+                </button>
+              )}
+              {book.status !== 'READING' && onStatusChange && (
+                <button
+                  onClick={() => {
+                    onStatusChange(book.id, ReadingStatus.READING);
+                    setShowMenu(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Mark as Reading
+                </button>
+              )}
               {book.status !== 'FINISHED' && onStatusChange && (
                 <button
                   onClick={() => {
                     onStatusChange(book.id, ReadingStatus.FINISHED);
                     setShowMenu(false);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left rounded-t-lg"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
                 >
                   <CheckCircle className="w-4 h-4" />
                   Mark as Complete

@@ -100,21 +100,23 @@ export function NotesPanel({
           <div className="flex gap-2">
             <button
               onClick={() => setSortAscending(!sortAscending)}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              disabled={notes.length === 0}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
               title={sortAscending ? 'Sort: Page 1 → Last. Click to reverse' : 'Sort: Last → Page 1. Click to reverse'}
             >
-              <ArrowUpDown className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+              <ArrowUpDown className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                 {sortAscending ? '1 → Last' : 'Last → 1'}
               </span>
             </button>
             <button
               onClick={onExportNotes}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              disabled={notes.length === 0}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
               title="Download notes as text file"
             >
-              <Download className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Export</span>
+              <Download className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Export</span>
             </button>
           </div>
         </div>
