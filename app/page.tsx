@@ -5,6 +5,7 @@ import { Library } from 'lucide-react';
 import { useToast } from '@/components/common/Toast';
 import { UploadButton } from '@/components/library/UploadButton';
 import { FeaturedBooks } from '@/components/library/FeaturedBooks';
+import { ReadingStats } from '@/components/library/ReadingStats';
 import { BatchUploadProgress } from '@/components/library/BatchUploadProgress';
 import { useBooks } from '@/hooks/useBooks';
 import type { BatchUploadFileResult } from '@/types';
@@ -78,6 +79,11 @@ export default function HomePage() {
         {/* Featured Books - Recently Read */}
         <div className="mb-8">
           <FeaturedBooks limit={5} />
+        </div>
+
+        {/* Reading Stats */}
+        <div className="mb-8">
+          <ReadingStats />
         </div>
       </div>
 

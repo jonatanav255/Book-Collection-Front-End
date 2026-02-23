@@ -17,7 +17,7 @@ import { BatchAudioGenerator } from '@/components/audio/BatchAudioGenerator';
 import { Modal } from '@/components/common/Modal';
 import { Loading } from '@/components/common/Loading';
 import { booksApi } from '@/services/api';
-import { CreateNoteRequest } from '@/types';
+import { CreateNoteRequest, UpdateNoteRequest } from '@/types';
 
 export default function ReaderPage() {
   const params = useParams();
@@ -177,7 +177,7 @@ export default function ReaderPage() {
     }
   };
 
-  const handleUpdateNote = async (id: string, updates: any) => {
+  const handleUpdateNote = async (id: string, updates: UpdateNoteRequest) => {
     try {
       await updateNote(id, updates);
       showToast('Note updated successfully', 'success');

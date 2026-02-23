@@ -78,7 +78,7 @@ export default function AllBooksPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [books.length > 0]); // re-attach only when sentinel appears/disappears
+  }, [books.length > 0, debouncedSearch, sortBy, statusFilter]); // re-attach when filters change or sentinel appears/disappears
 
   // Fetch stats from the stats endpoint
   const [stats, setStats] = useState({ total: 0, reading: 0, finished: 0, unread: 0 });
@@ -261,6 +261,11 @@ export default function AllBooksPage() {
                 [...Array(4)].map((_, i) => <BookCardSkeleton key={`skeleton-${i}`} />)}
             </div>
             <div ref={sentinelRef} className="h-4" />
+            {!hasMore && books.length > 0 && (
+              <p className="text-center text-sm text-gray-500 py-6">
+                — You've reached the end —
+              </p>
+            )}
           </>
         )}
       </div>

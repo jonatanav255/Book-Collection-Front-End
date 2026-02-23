@@ -223,6 +223,8 @@ export function usePaginatedBooks(filters: {
 
   // Reset when filters change
   useEffect(() => {
+    setHasMore(true);
+    setPage(0);
     fetchPage(0, false);
     return () => { abortRef.current?.abort(); };
   }, [fetchPage]);
