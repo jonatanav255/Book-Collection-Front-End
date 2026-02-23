@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Loader2 } from 'lucide-react';
 import { Book } from '@/types';
 import { booksApi } from '@/services/api';
 import { Loading } from '../common/Loading';
@@ -88,9 +88,9 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
         </div>
         <Link
           href="/library"
-          className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-gray-900 text-sm font-medium rounded-lg transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-cyan-500/25"
         >
-          View All
+          All Books
           <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
@@ -108,6 +108,7 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
 function FeaturedBookCard({ book }: { book: Book }) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isOpening, setIsOpening] = useState(false);
   const progress = book.status === 'FINISHED'
     ? 100
     : book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
@@ -117,7 +118,7 @@ function FeaturedBookCard({ book }: { book: Book }) {
     : book.coverUrl;
 
   return (
-    <Link href={`/reader/${book.id}`}>
+    <Link href={`/reader/${book.id}`} onClick={() => setIsOpening(true)}>
       <div className="group cursor-pointer">
         {/* Book Cover */}
         <div className="aspect-[3/4] relative bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
@@ -136,6 +137,13 @@ function FeaturedBookCard({ book }: { book: Book }) {
             quality={75}
             priority={false}
           />
+
+          {/* Opening overlay */}
+          {isOpening && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+              <Loader2 className="w-8 h-8 text-white animate-spin" />
+            </div>
+          )}
 
           {/* Progress Overlay */}
           {progress > 0 && (

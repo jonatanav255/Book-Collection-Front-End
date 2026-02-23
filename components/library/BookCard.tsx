@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Trash2, MoreVertical, CheckCircle, Pencil } from 'lucide-react';
+import { Trash2, MoreVertical, CheckCircle, Pencil, Loader2 } from 'lucide-react';
 import { Book, ReadingStatus } from '@/types';
 import { booksApi } from '@/services/api';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -22,6 +22,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(book.title);
+  const [isOpening, setIsOpening] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,7 +55,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
     <>
       <div className="group relative bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
         {/* Book Cover */}
-        <Link href={`/reader/${book.id}`}>
+        <Link href={`/reader/${book.id}`} onClick={() => setIsOpening(true)}>
           <div className="aspect-[3/4] relative bg-gray-200 dark:bg-gray-700 overflow-hidden">
             {/* Shimmer placeholder */}
             {!imageLoaded && (
@@ -71,6 +72,13 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
               quality={75}
               priority={false}
             />
+
+            {/* Opening overlay */}
+            {isOpening && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                <Loader2 className="w-8 h-8 text-white animate-spin" />
+              </div>
+            )}
 
             {/* Progress Overlay */}
             {progress > 0 && (

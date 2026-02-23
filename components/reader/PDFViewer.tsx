@@ -116,8 +116,22 @@ export function PDFViewer({
 
         if (!isMounted) return;
 
-        // Calculate viewport dimensions based on scale
-        const viewport = page.getViewport({ scale });
+        // On small screens, fit PDF to fill the container (width-constrained)
+        // On all screens, never exceed container width
+        const wrapperEl = canvasRef.current?.parentElement?.parentElement;
+        let effectiveScale = scale;
+        if (wrapperEl) {
+          const containerWidth = wrapperEl.clientWidth;
+          const baseViewport = page.getViewport({ scale: 1 });
+          const fitWidthScale = containerWidth / baseViewport.width;
+          // On mobile (< 768px), use fit-to-width as the scale
+          if (window.innerWidth < 768) {
+            effectiveScale = fitWidthScale;
+          } else if (fitWidthScale < scale) {
+            effectiveScale = fitWidthScale;
+          }
+        }
+        const viewport = page.getViewport({ scale: effectiveScale });
         const canvas = canvasRef.current;
 
         if (!canvas) return;
@@ -203,7 +217,7 @@ export function PDFViewer({
   }
 
   return (
-    <div className="w-full h-full overflow-auto bg-gray-100 dark:bg-gray-950 p-1 sm:p-4">
+    <div className="w-full h-full overflow-auto bg-gray-100 dark:bg-gray-950 p-0 sm:p-4">
       <div className="flex items-center justify-center min-w-full min-h-full">
         <div ref={containerRef} className="relative">
           <canvas
