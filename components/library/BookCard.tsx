@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Trash2, MoreVertical, CheckCircle, BookOpen, BookX, Pencil, Loader2 } from 'lucide-react';
 import { Book, ReadingStatus } from '@/types';
-import { booksApi } from '@/services/api';
+import { useBookCover } from '@/hooks/useBookCover';
+import { useClickOutside } from '@/hooks/useClickOutside';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
 interface BookCardProps {
@@ -18,41 +19,20 @@ interface BookCardProps {
 export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusChange, onRename }: BookCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(book.title);
   const [isOpening, setIsOpening] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    };
+  const closeMenu = useCallback(() => setShowMenu(false), []);
+  useClickOutside(menuRef, closeMenu, showMenu);
 
-    if (showMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showMenu]);
+  const { imageUrl, imageLoaded, handleLoad, handleError } = useBookCover(book.id, book.coverUrl);
 
   const progress = book.status === 'FINISHED'
     ? 100
     : book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
-
-  const googleCoverUrl = book.coverUrl
-    ? book.coverUrl.replace('zoom=1', 'zoom=2').replace('&edge=curl', '')
-    : null;
-  const imageUrl = imageError || !googleCoverUrl
-    ? booksApi.getThumbnailUrl(book.id)
-    : googleCoverUrl;
 
   return (
     <>
@@ -69,15 +49,8 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
               alt={book.title}
               fill
               className={`object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={(e) => {
-                const img = e.target as HTMLImageElement;
-                if (googleCoverUrl && !imageError && img.naturalWidth < 150) {
-                  setImageError(true);
-                } else {
-                  setImageLoaded(true);
-                }
-              }}
-              onError={() => setImageError(true)}
+              onLoad={handleLoad}
+              onError={handleError}
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
               quality={75}
               priority={false}
@@ -165,6 +138,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
             {/* More Options Button */}
             <button
               onClick={() => setShowMenu(!showMenu)}
+              aria-label="More options"
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-400" />

@@ -42,6 +42,7 @@ export default function AllBooksPage() {
     loadingMore,
     hasMore,
     totalElements,
+    error: paginationError,
     loadMore,
     refetch,
   } = usePaginatedBooks({
@@ -235,8 +236,21 @@ export default function AllBooksPage() {
           />
         </div>
 
+        {/* Error Message */}
+        {paginationError && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-red-700 dark:text-red-400 text-sm">{paginationError}</p>
+            <button
+              onClick={refetch}
+              className="mt-2 text-sm text-red-600 dark:text-red-300 underline hover:no-underline"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
         {/* Books Grid */}
-        {books.length === 0 ? (
+        {books.length === 0 && !paginationError ? (
           <div className="text-center py-16">
             <Library className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">

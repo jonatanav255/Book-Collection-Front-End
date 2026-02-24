@@ -77,7 +77,7 @@ export function useBooks() {
   const updateBookStatus = useCallback(async (id: string, status: ReadingStatus) => {
     try {
       const book = books.find(b => b.id === id);
-      const updates: any = { status };
+      const updates: Partial<Pick<Book, 'status' | 'currentPage'>> = { status };
 
       if (status === 'FINISHED' && book && book.pageCount > 0) {
         updates.currentPage = book.pageCount;
@@ -120,6 +120,7 @@ export function usePaginatedBooks(filters: {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const initialLoadDone = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -141,6 +142,7 @@ export function usePaginatedBooks(filters: {
       } else {
         setRefreshing(true);
       }
+      setError(null);
 
       const data = await booksApi.listPaged({
         page: pageNum,
@@ -158,6 +160,7 @@ export function usePaginatedBooks(filters: {
       initialLoadDone.current = true;
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
+      setError(err instanceof Error ? err.message : 'Failed to fetch books');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -199,6 +202,7 @@ export function usePaginatedBooks(filters: {
     loadingMore,
     hasMore,
     totalElements,
+    error,
     loadMore,
     refetch,
   };

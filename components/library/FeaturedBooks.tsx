@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { Book } from '@/types';
 import { booksApi } from '@/services/api';
+import { useBookCover } from '@/hooks/useBookCover';
 import { Loading } from '../common/Loading';
 
 interface FeaturedBooksProps {
@@ -106,19 +107,11 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
 }
 
 function FeaturedBookCard({ book }: { book: Book }) {
-  const [imageError, setImageError] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
+  const { imageUrl, imageLoaded, handleLoad, handleError } = useBookCover(book.id, book.coverUrl);
   const progress = book.status === 'FINISHED'
     ? 100
     : book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
-
-  const googleCoverUrl = book.coverUrl
-    ? book.coverUrl.replace('zoom=1', 'zoom=2').replace('&edge=curl', '')
-    : null;
-  const imageUrl = imageError || !googleCoverUrl
-    ? booksApi.getThumbnailUrl(book.id)
-    : googleCoverUrl;
 
   return (
     <Link href={`/reader/${book.id}`} onClick={() => setIsOpening(true)}>
@@ -134,15 +127,8 @@ function FeaturedBookCard({ book }: { book: Book }) {
             alt={book.title}
             fill
             className={`object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-            onLoad={(e) => {
-              const img = e.target as HTMLImageElement;
-              if (googleCoverUrl && !imageError && img.naturalWidth < 150) {
-                setImageError(true);
-              } else {
-                setImageLoaded(true);
-              }
-            }}
-            onError={() => setImageError(true)}
+            onLoad={handleLoad}
+            onError={handleError}
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
             quality={75}
             priority={false}

@@ -90,14 +90,18 @@ export function useProgress(bookId: string | null) {
     [updateProgress]
   );
 
-  // Cleanup debounce timer on unmount
+  // Flush pending update and cleanup debounce timer on unmount
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
+      if (pendingUpdateRef.current && bookId) {
+        progressApi.update(bookId, pendingUpdateRef.current).catch(() => {});
+        pendingUpdateRef.current = null;
+      }
     };
-  }, []);
+  }, [bookId]);
 
   return {
     progress,

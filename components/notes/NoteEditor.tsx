@@ -11,10 +11,11 @@ interface NoteEditorProps {
   onClose: () => void;
   onSave: (note: CreateNoteRequest | { id: string; updates: Partial<Note> }) => void;
   currentPage: number;
+  totalPages?: number;
   editingNote?: Note | null;
 }
 
-export function NoteEditor({ isOpen, onClose, onSave, currentPage, editingNote }: NoteEditorProps) {
+export function NoteEditor({ isOpen, onClose, onSave, currentPage, totalPages, editingNote }: NoteEditorProps) {
   const [content, setContent] = useState('');
   const [color, setColor] = useState<NoteColor>(NoteColor.IDEA);
   const [pageNumber, setPageNumber] = useState(currentPage);
@@ -97,8 +98,12 @@ export function NoteEditor({ isOpen, onClose, onSave, currentPage, editingNote }
             <input
               type="number"
               value={pageNumber}
-              onChange={(e) => setPageNumber(parseInt(e.target.value) || 1)}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 1;
+                setPageNumber(Math.max(1, totalPages ? Math.min(val, totalPages) : val));
+              }}
               min="1"
+              max={totalPages}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

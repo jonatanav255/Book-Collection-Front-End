@@ -52,6 +52,9 @@ export function ReaderControls({
     setPageInput(value);
   };
 
+  const pageInputValue = parseInt(pageInput);
+  const isPageInputInvalid = pageInput !== '' && (isNaN(pageInputValue) || pageInputValue < 1 || pageInputValue > totalPages);
+
   const handlePageInputSubmit = () => {
     const page = parseInt(pageInput);
     if (page >= 1 && page <= totalPages) {
@@ -97,6 +100,7 @@ export function ReaderControls({
               href="/"
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               title="Back to Library"
+              aria-label="Back to Library"
             >
               <Home className="w-5 h-5 text-gray-700 dark:text-white" />
             </Link>
@@ -107,6 +111,7 @@ export function ReaderControls({
             disabled={currentPage <= 1}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Previous Page"
+            aria-label="Previous Page"
           >
             <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-white" />
           </button>
@@ -119,7 +124,7 @@ export function ReaderControls({
               onChange={(e) => handlePageInputChange(e.target.value)}
               onBlur={handlePageInputSubmit}
               onKeyDown={(e) => e.key === 'Enter' && handlePageInputSubmit()}
-              className="w-12 sm:w-16 px-2 py-1 text-center border border-gray-300 dark:border-gray-500 rounded bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-12 sm:w-16 px-2 py-1 text-center border rounded bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 ${isPageInputInvalid ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-500 focus:ring-blue-500'}`}
             />
             <span className="text-sm text-gray-700 dark:text-white hidden sm:inline">
               of {totalPages}
@@ -131,6 +136,7 @@ export function ReaderControls({
             disabled={currentPage >= totalPages}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Next Page"
+            aria-label="Next Page"
           >
             <ChevronRight className="w-5 h-5 text-gray-700 dark:text-white" />
           </button>
@@ -143,6 +149,7 @@ export function ReaderControls({
             disabled={scale <= 0.5}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Zoom Out"
+            aria-label="Zoom Out"
           >
             <ZoomOut className="w-5 h-5 text-gray-700 dark:text-white" />
           </button>
@@ -156,6 +163,7 @@ export function ReaderControls({
             disabled={scale >= 3}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Zoom In"
+            aria-label="Zoom In"
           >
             <ZoomIn className="w-5 h-5 text-gray-700 dark:text-white" />
           </button>
@@ -168,6 +176,7 @@ export function ReaderControls({
             onClick={onToggleTimer}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Reading Timer"
+            aria-label="Reading Timer"
           >
             {isTimerRunning ? (
               <TimerReset className="w-5 h-5 text-gray-700 dark:text-white" />
@@ -180,6 +189,7 @@ export function ReaderControls({
             onClick={onToggleReadAloud}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Read Aloud"
+            aria-label="Read Aloud"
           >
             <Volume2 className="w-5 h-5 text-gray-700 dark:text-white" />
           </button>
@@ -188,6 +198,7 @@ export function ReaderControls({
             onClick={onToggleNotes}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Notes"
+            aria-label="Notes"
           >
             <StickyNote className="w-5 h-5 text-gray-700 dark:text-white" />
           </button>
@@ -196,6 +207,7 @@ export function ReaderControls({
             onClick={onToggleSettings}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Settings"
+            aria-label="Settings"
           >
             <Settings className="w-5 h-5 text-gray-700 dark:text-white" />
           </button>
@@ -204,6 +216,7 @@ export function ReaderControls({
             onClick={onToggleFullscreen}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+            aria-label={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
           >
             <Maximize className="w-5 h-5 text-gray-700 dark:text-white" />
           </button>

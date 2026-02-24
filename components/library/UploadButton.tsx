@@ -3,6 +3,10 @@
 import React, { useRef } from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '../common/Button';
+import { useToast } from '../common/Toast';
+
+const MAX_FILE_SIZE_MB = 100;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 interface UploadButtonProps {
   onUpload: (files: File[]) => void;
@@ -11,6 +15,7 @@ interface UploadButtonProps {
 
 export function UploadButton({ onUpload, isLoading = false }: UploadButtonProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const allFiles = Array.from(e.target.files || []);
@@ -31,7 +36,21 @@ export function UploadButton({ onUpload, isLoading = false }: UploadButtonProps)
       return;
     }
 
-    onUpload(pdfFiles);
+    const oversized = pdfFiles.filter((f) => f.size > MAX_FILE_SIZE_BYTES);
+    if (oversized.length > 0) {
+      showToast(
+        `${oversized.length} file${oversized.length > 1 ? 's exceed' : ' exceeds'} the ${MAX_FILE_SIZE_MB}MB limit and will be skipped.`,
+        'warning'
+      );
+      const validFiles = pdfFiles.filter((f) => f.size <= MAX_FILE_SIZE_BYTES);
+      if (validFiles.length === 0) {
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      onUpload(validFiles);
+    } else {
+      onUpload(pdfFiles);
+    }
 
     // Reset input
     if (fileInputRef.current) {

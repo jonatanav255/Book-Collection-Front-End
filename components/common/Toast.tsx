@@ -76,12 +76,15 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
 
   return (
     <div
+      role="alert"
+      aria-live="assertive"
       className={`flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg min-w-0 sm:min-w-[300px] w-full sm:w-auto max-w-md animate-slide-in ${styles[toast.type]}`}
     >
       <div className="flex-shrink-0">{icons[toast.type]}</div>
       <p className="flex-1 text-sm font-medium">{toast.message}</p>
       <button
         onClick={() => onDismiss(toast.id)}
+        aria-label="Dismiss"
         className="flex-shrink-0 opacity-70 hover:opacity-100 transition-opacity"
       >
         <X className="w-4 h-4" />
