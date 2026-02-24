@@ -195,6 +195,10 @@ export function usePaginatedBooks(filters: {
     fetchPage(0, false);
   }, [fetchPage]);
 
+  const updateBookInList = useCallback((updatedBook: Book) => {
+    setBooks(prev => prev.map(b => b.id === updatedBook.id ? updatedBook : b));
+  }, []);
+
   return {
     books,
     loading,
@@ -205,6 +209,7 @@ export function usePaginatedBooks(filters: {
     error,
     loadMore,
     refetch,
+    updateBookInList,
   };
 }
 

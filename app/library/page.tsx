@@ -45,6 +45,7 @@ export default function AllBooksPage() {
     error: paginationError,
     loadMore,
     refetch,
+    updateBookInList,
   } = usePaginatedBooks({
     search: debouncedSearch,
     sortBy,
@@ -162,24 +163,24 @@ export default function AllBooksPage() {
 
   const handleStatusChange = useCallback(async (id: string, status: ReadingStatus) => {
     try {
-      await updateBookStatus(id, status);
+      const updated = await updateBookStatus(id, status);
+      if (updated) updateBookInList(updated);
       showToast('Book status updated', 'success');
-      refetch();
       fetchStats();
     } catch (err) {
       showToast('Failed to update book status', 'error');
     }
-  }, [updateBookStatus, showToast, refetch, fetchStats]);
+  }, [updateBookStatus, updateBookInList, showToast, fetchStats]);
 
   const handleRename = useCallback(async (id: string, title: string) => {
     try {
-      await updateBook(id, { title });
+      const updated = await updateBook(id, { title });
+      if (updated) updateBookInList(updated);
       showToast('Book renamed successfully', 'success');
-      refetch();
     } catch (err) {
       showToast('Failed to rename book', 'error');
     }
-  }, [updateBook, showToast, refetch]);
+  }, [updateBook, updateBookInList, showToast]);
 
   if (loading) {
     return (
