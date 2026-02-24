@@ -50,7 +50,7 @@ export default function AllBooksPage() {
     status: statusFilter || undefined,
   });
 
-  const { uploadBook, uploadBooks, deleteBook, updateBookStatus, updateBook } = useBooks(undefined, { skip: true });
+  const { uploadBook, uploadBooks, deleteBook, updateBookStatus, updateBook } = useBooks();
   const { showToast } = useToast();
 
   // Scroll to top on mount and when search/filters change
@@ -263,7 +263,7 @@ export default function AllBooksPage() {
             <div ref={sentinelRef} className="h-4" />
             {!hasMore && books.length > 0 && (
               <p className="text-center text-sm text-gray-500 py-6">
-                — You've reached the end —
+                — You&apos;ve reached the end —
               </p>
             )}
           </>

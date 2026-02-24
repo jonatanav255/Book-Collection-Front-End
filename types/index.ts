@@ -100,48 +100,6 @@ export interface PaginatedResponse<T> {
   last: boolean;
 }
 
-export interface BooksListResponse {
-  books: Book[];
-}
-
-export interface GoogleBooksCandidate {
-  title: string;
-  authors: string[];
-  description?: string;
-  categories?: string[];
-  coverUrl?: string;
-}
-
-// Filter and Sort Types
-export interface BookFilters {
-  search?: string;
-  status?: ReadingStatus;
-  sortBy?: 'title' | 'dateAdded' | 'lastRead' | 'progress';
-}
-
-// PDF Rendering Types
-export interface PDFPageInfo {
-  pageNumber: number;
-  totalPages: number;
-  scale: number;
-}
-
-// Read Aloud Types
-export interface ReadAloudState {
-  isPlaying: boolean;
-  currentPage: number;
-  speed: number;
-  voice?: SpeechSynthesisVoice;
-}
-
-export interface ReadAloudControls {
-  play: () => void;
-  pause: () => void;
-  stop: () => void;
-  setSpeed: (speed: number) => void;
-  setVoice: (voice: SpeechSynthesisVoice) => void;
-}
-
 // Batch Upload Types
 export type BatchUploadFileStatus = 'pending' | 'uploading' | 'success' | 'skipped' | 'failed';
 
@@ -151,10 +109,3 @@ export interface BatchUploadFileResult {
   error?: string;
 }
 
-// Export/Import Types
-export interface LibraryExport {
-  books: Book[];
-  notes: Note[];
-  preferences: Preferences;
-  exportDate: string;
-}

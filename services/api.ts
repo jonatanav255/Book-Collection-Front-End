@@ -6,8 +6,6 @@ import type {
   UpdateNoteRequest,
   Preferences,
   UpdatePreferencesRequest,
-  GoogleBooksCandidate,
-  LibraryExport,
   PaginatedResponse,
 } from '@/types';
 
@@ -36,21 +34,6 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 // Books API
 export const booksApi = {
-  async list(params?: {
-    search?: string;
-    sortBy?: string;
-    status?: string;
-  }): Promise<Book[]> {
-    const queryParams = new URLSearchParams();
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
-    if (params?.status) queryParams.append('status', params.status);
-
-    const url = `${API_URL}/books${queryParams.toString() ? `?${queryParams}` : ''}`;
-    const response = await fetch(url);
-    return handleResponse<Book[]>(response);
-  },
-
   async listPaged(params: {
     page: number;
     size: number;
@@ -188,38 +171,6 @@ export const preferencesApi = {
       body: JSON.stringify(preferences),
     });
     return handleResponse<Preferences>(response);
-  },
-};
-
-// Google Books Lookup API
-export const googleBooksApi = {
-  async lookup(title?: string, author?: string): Promise<GoogleBooksCandidate[]> {
-    const queryParams = new URLSearchParams();
-    if (title) queryParams.append('title', title);
-    if (author) queryParams.append('author', author);
-
-    const response = await fetch(`${API_URL}/books/lookup?${queryParams}`);
-    return handleResponse<GoogleBooksCandidate[]>(response);
-  },
-};
-
-// Export/Import API
-export const libraryApi = {
-  async export(): Promise<Blob> {
-    const response = await fetch(`${API_URL}/export`);
-    if (!response.ok) {
-      throw new ApiError(response.status, 'Failed to export library');
-    }
-    return response.blob();
-  },
-
-  async import(data: LibraryExport): Promise<void> {
-    const response = await fetch(`${API_URL}/import`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    return handleResponse<void>(response);
   },
 };
 

@@ -2,61 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { booksApi, ApiError } from '@/services/api';
 import type { Book, ReadingStatus, BatchUploadFileResult } from '@/types';
 
-export function useBooks(filters?: {
-  search?: string;
-  sortBy?: string;
-  status?: ReadingStatus;
-}, options?: { skip?: boolean }) {
-  const skip = options?.skip ?? false;
+export function useBooks() {
   const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(!skip);
-  const [error, setError] = useState<string | null>(null);
-
-  const search = filters?.search;
-  const sortBy = filters?.sortBy;
-  const status = filters?.status;
-
-  const fetchBooks = useCallback(async () => {
-    if (skip) return;
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await booksApi.list({ search, sortBy, status });
-      setBooks(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch books');
-    } finally {
-      setLoading(false);
-    }
-  }, [search, sortBy, status, skip]);
-
-  useEffect(() => {
-    fetchBooks();
-  }, [fetchBooks]);
-
-  // Refetch silently when user returns (tab switch or window focus from in-app navigation)
-  useEffect(() => {
-    if (skip) return;
-    const refetchSilently = async () => {
-      try {
-        const data = await booksApi.list({ search, sortBy, status });
-        setBooks(data);
-      } catch {
-        // silently ignore refetch errors
-      }
-    };
-    const handleVisibilityChange = () => {
-      if (!document.hidden) refetchSilently();
-    };
-    const handleFocus = () => refetchSilently();
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [search, sortBy, status, skip]);
 
   const uploadBook = useCallback(async (file: File) => {
     try {
@@ -151,9 +98,6 @@ export function useBooks(filters?: {
 
   return {
     books,
-    loading,
-    error,
-    refetch: fetchBooks,
     uploadBook,
     uploadBooks,
     deleteBook,
