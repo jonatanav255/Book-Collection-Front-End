@@ -153,7 +153,12 @@ export function usePaginatedBooks(filters: {
       }, controller.signal);
 
       const content = data.content ?? [];
-      setBooks(prev => append ? [...prev, ...content] : content);
+      setBooks(prev => {
+        if (!append) return content;
+        const existingIds = new Set(prev.map(b => b.id));
+        const newBooks = content.filter(b => !existingIds.has(b.id));
+        return [...prev, ...newBooks];
+      });
       setHasMore(!data.last);
       setTotalElements(data.totalElements);
       setPage(data.number);
