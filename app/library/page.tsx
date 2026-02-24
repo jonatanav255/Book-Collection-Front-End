@@ -46,6 +46,7 @@ export default function AllBooksPage() {
     loadMore,
     refetch,
     updateBookInList,
+    removeBookFromList,
   } = usePaginatedBooks({
     search: debouncedSearch,
     sortBy,
@@ -153,13 +154,13 @@ export default function AllBooksPage() {
   const handleDelete = useCallback(async (id: string) => {
     try {
       await deleteBook(id);
+      removeBookFromList(id);
       showToast('Book deleted successfully', 'success');
-      refetch();
       fetchStats();
     } catch (err) {
       showToast('Failed to delete book', 'error');
     }
-  }, [deleteBook, showToast, refetch, fetchStats]);
+  }, [deleteBook, removeBookFromList, showToast, fetchStats]);
 
   const handleStatusChange = useCallback(async (id: string, status: ReadingStatus) => {
     try {

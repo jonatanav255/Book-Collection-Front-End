@@ -199,6 +199,11 @@ export function usePaginatedBooks(filters: {
     setBooks(prev => prev.map(b => b.id === updatedBook.id ? updatedBook : b));
   }, []);
 
+  const removeBookFromList = useCallback((id: string) => {
+    setBooks(prev => prev.filter(b => b.id !== id));
+    setTotalElements(prev => Math.max(0, prev - 1));
+  }, []);
+
   return {
     books,
     loading,
@@ -210,6 +215,7 @@ export function usePaginatedBooks(filters: {
     loadMore,
     refetch,
     updateBookInList,
+    removeBookFromList,
   };
 }
 
