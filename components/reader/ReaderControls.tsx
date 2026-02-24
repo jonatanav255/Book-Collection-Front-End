@@ -53,7 +53,7 @@ export function ReaderControls({
   };
 
   const pageInputValue = parseInt(pageInput);
-  const isPageInputInvalid = pageInput !== '' && (isNaN(pageInputValue) || pageInputValue < 1 || pageInputValue > totalPages);
+  const isPageInputInvalid = pageInput !== '' && totalPages > 0 && (isNaN(pageInputValue) || pageInputValue < 1 || pageInputValue > totalPages);
 
   const handlePageInputSubmit = () => {
     const page = parseInt(pageInput);

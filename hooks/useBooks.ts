@@ -76,10 +76,10 @@ export function useBooks() {
 
   const updateBookStatus = useCallback(async (id: string, status: ReadingStatus) => {
     try {
-      const book = books.find(b => b.id === id);
+      const book = await booksApi.getById(id);
       const updates: Partial<Pick<Book, 'status' | 'currentPage'>> = { status };
 
-      if (status === 'FINISHED' && book && book.pageCount > 0) {
+      if (status === 'FINISHED' && book.pageCount > 0) {
         updates.currentPage = book.pageCount;
       } else if (status === 'UNREAD') {
         updates.currentPage = 0;
@@ -94,7 +94,7 @@ export function useBooks() {
     } catch (err) {
       throw err;
     }
-  }, [books]);
+  }, []);
 
   return {
     books,
