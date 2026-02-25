@@ -4,6 +4,8 @@ import { notesApi } from '@/services/api';
 import { queryKeys } from './queryKeys';
 import type { Note, CreateNoteRequest, UpdateNoteRequest } from '@/types';
 
+// Notes hook with React Query caching and optimistic updates
+// CRUD operations update the cache in-place via setQueryData (no refetch needed)
 export function useNotes(bookId: string | null, sortBy: 'page' | 'date' = 'page') {
   const queryClient = useQueryClient();
 
@@ -14,6 +16,7 @@ export function useNotes(bookId: string | null, sortBy: 'page' | 'date' = 'page'
     staleTime: 60 * 1000,
   });
 
+  // Create note and prepend to cache (newest first)
   const createNote = useCallback(async (noteData: CreateNoteRequest) => {
     if (!bookId) throw new Error('No book ID provided');
     const newNote = await notesApi.create(bookId, noteData);
@@ -24,6 +27,7 @@ export function useNotes(bookId: string | null, sortBy: 'page' | 'date' = 'page'
     return newNote;
   }, [bookId, sortBy, queryClient]);
 
+  // Update note and replace it in cache by ID
   const updateNote = useCallback(async (noteId: string, updates: UpdateNoteRequest) => {
     const updated = await notesApi.update(noteId, updates);
     if (bookId) {
@@ -35,6 +39,7 @@ export function useNotes(bookId: string | null, sortBy: 'page' | 'date' = 'page'
     return updated;
   }, [bookId, sortBy, queryClient]);
 
+  // Delete note and remove from cache
   const deleteNote = useCallback(async (noteId: string) => {
     await notesApi.delete(noteId);
     if (bookId) {
@@ -45,6 +50,7 @@ export function useNotes(bookId: string | null, sortBy: 'page' | 'date' = 'page'
     }
   }, [bookId, sortBy, queryClient]);
 
+  // Download notes as markdown file
   const exportNotes = useCallback(async () => {
     if (!bookId) throw new Error('No book ID provided');
     const blob = await notesApi.export(bookId);

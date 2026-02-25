@@ -4,9 +4,12 @@ import { booksApi, ApiError } from '@/services/api';
 import { queryKeys } from './queryKeys';
 import type { Book, ReadingStatus, BatchUploadFileResult, PaginatedResponse } from '@/types';
 
+// Mutation-only hook for book CRUD operations
+// After each mutation, invalidates all book-related caches (list, stats, featured, details)
 export function useBooks() {
   const queryClient = useQueryClient();
 
+  // Invalidates everything under ['books'] — list, stats, featured, details
   const invalidateBookCaches = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: queryKeys.books.all });
   }, [queryClient]);
@@ -17,6 +20,7 @@ export function useBooks() {
     return newBook;
   }, [invalidateBookCaches]);
 
+  // Sequential batch upload with per-file progress reporting
   const uploadBooks = useCallback(
     async (
       files: File[],
@@ -62,11 +66,13 @@ export function useBooks() {
 
   const updateBook = useCallback(async (id: string, updates: Partial<Book>) => {
     const updated = await booksApi.update(id, updates);
+    // Update the single-book detail cache immediately
     queryClient.setQueryData(queryKeys.books.detail(id), updated);
     invalidateBookCaches();
     return updated;
   }, [queryClient, invalidateBookCaches]);
 
+  // Handles status transitions: FINISHED sets currentPage to max, UNREAD resets to 0
   const updateBookStatus = useCallback(async (id: string, status: ReadingStatus) => {
     const book = await booksApi.getById(id);
     const updates: Partial<Pick<Book, 'status' | 'currentPage'>> = { status };
@@ -87,12 +93,16 @@ export function useBooks() {
 
 const PAGE_SIZE = 10;
 
+// Infinite scroll hook for the library page
+// Uses useInfiniteQuery to accumulate pages as the user scrolls down
 export function usePaginatedBooks(filters: {
   search?: string;
   sortBy?: string;
   status?: string;
 }) {
   const queryClient = useQueryClient();
+
+  // Memoize to keep useCallback dependencies stable across renders
   const filterKey = useMemo(() => ({
     search: filters.search,
     sortBy: filters.sortBy,
@@ -118,22 +128,29 @@ export function usePaginatedBooks(filters: {
         sortBy: filters.sortBy || undefined,
         status: filters.status || undefined,
       }, signal),
+
     initialPageParam: 0,
+
+    // Spring Boot returns `last: true` on the final page — stop fetching when reached
     getNextPageParam: (lastPage) => lastPage.last ? undefined : lastPage.number + 1,
+
     staleTime: 60 * 1000,
     refetchOnWindowFocus: true,
   });
 
+  // Flatten all pages into a single array: [page0.content, page1.content, ...]
   const books = data?.pages.flatMap(page => page.content) ?? [];
   const totalElements = data?.pages[0]?.totalElements ?? 0;
   const hasMore = hasNextPage ?? false;
 
+  // Called by IntersectionObserver when the scroll sentinel becomes visible
   const loadMore = useCallback(() => {
     if (!loadingMore && hasMore) {
       fetchNextPage();
     }
   }, [loadingMore, hasMore, fetchNextPage]);
 
+  // Optimistic update: replace a book in the cached pages without refetching
   const updateBookInList = useCallback((updatedBook: Book) => {
     queryClient.setQueryData<{ pages: PaginatedResponse<Book>[]; pageParams: number[] }>(
       queryKeys.books.list(filterKey),
@@ -152,6 +169,7 @@ export function usePaginatedBooks(filters: {
     );
   }, [queryClient, filterKey]);
 
+  // Optimistic removal: filter out a book from cached pages without refetching
   const removeBookFromList = useCallback((id: string) => {
     queryClient.setQueryData<{ pages: PaginatedResponse<Book>[]; pageParams: number[] }>(
       queryKeys.books.list(filterKey),
@@ -184,11 +202,12 @@ export function usePaginatedBooks(filters: {
   };
 }
 
+// Single book detail hook — cached for 2 min so navigating back from reader is instant
 export function useBook(id: string | null) {
   const { data: book, isLoading: loading, error: queryError } = useQuery({
     queryKey: queryKeys.books.detail(id!),
     queryFn: () => booksApi.getById(id!),
-    enabled: !!id,
+    enabled: !!id,       // Only fetch when id is provided
     staleTime: 2 * 60 * 1000,
   });
 

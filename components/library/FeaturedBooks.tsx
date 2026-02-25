@@ -16,6 +16,8 @@ interface FeaturedBooksProps {
 }
 
 export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
+  // Cached for 5 min — featured books don't change often
+  // refetchOnWindowFocus deduplicates tab switches (one fetch vs previous 3)
   const { data: books = [], isLoading: loading, error } = useQuery({
     queryKey: queryKeys.books.featured(limit),
     queryFn: () => booksApi.getFeatured(limit),

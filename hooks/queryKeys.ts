@@ -1,3 +1,15 @@
+// Central cache key factory for React Query
+// All query keys are defined here so invalidation is consistent across the app
+//
+// Key hierarchy — invalidating a parent key invalidates all children:
+//   ['books']                                  → all book-related cache
+//   ['books', 'list', { search, sortBy, ... }] → paginated book list per filter
+//   ['books', 'detail', 'abc-123']             → single book by ID
+//   ['books', 'featured', 3]                   → featured books with limit
+//   ['books', 'stats']                         → library stats
+//   ['notes', 'book-id', 'page']               → notes for a book + sort order
+//   ['preferences']                            → user preferences (theme, font, etc.)
+
 export const queryKeys = {
   books: {
     all: ['books'] as const,
