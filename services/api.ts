@@ -32,6 +32,15 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
+export interface LibraryStats {
+  totalBooks: number;
+  readingBooks: number;
+  finishedBooks: number;
+  unreadBooks: number;
+  totalPages: number;
+  totalPagesRead: number;
+}
+
 // Books API
 export const booksApi = {
   async listPaged(params: {
@@ -95,6 +104,11 @@ export const booksApi = {
 
   getThumbnailUrl(id: string): string {
     return `${API_URL}/books/${id}/thumbnail`;
+  },
+
+  async getStats(): Promise<LibraryStats> {
+    const response = await fetch(`${API_URL}/books/stats`);
+    return handleResponse<LibraryStats>(response);
   },
 };
 

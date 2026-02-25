@@ -1,15 +1,21 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { booksApi, ApiError } from '@/services/api';
-import type { Book, ReadingStatus, BatchUploadFileResult } from '@/types';
+import { queryKeys } from './queryKeys';
+import type { Book, ReadingStatus, BatchUploadFileResult, PaginatedResponse } from '@/types';
 
 export function useBooks() {
-  const [books, setBooks] = useState<Book[]>([]);
+  const queryClient = useQueryClient();
+
+  const invalidateBookCaches = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.books.all });
+  }, [queryClient]);
 
   const uploadBook = useCallback(async (file: File) => {
     const newBook = await booksApi.upload(file);
-    setBooks((prev) => [newBook, ...prev]);
+    invalidateBookCaches();
     return newBook;
-  }, []);
+  }, [invalidateBookCaches]);
 
   const uploadBooks = useCallback(
     async (
@@ -26,8 +32,7 @@ export function useBooks() {
         onProgress?.(results, i);
 
         try {
-          const newBook = await booksApi.upload(files[i]);
-          setBooks((prev) => [newBook, ...prev]);
+          await booksApi.upload(files[i]);
           results[i] = { ...results[i], status: 'success' };
         } catch (err) {
           if (err instanceof ApiError && err.status === 409) {
@@ -44,23 +49,23 @@ export function useBooks() {
         onProgress?.(results, i);
       }
 
+      invalidateBookCaches();
       return results;
     },
-    []
+    [invalidateBookCaches]
   );
 
   const deleteBook = useCallback(async (id: string) => {
     await booksApi.delete(id);
-    setBooks((prev) => prev.filter((book) => book.id !== id));
-  }, []);
+    invalidateBookCaches();
+  }, [invalidateBookCaches]);
 
   const updateBook = useCallback(async (id: string, updates: Partial<Book>) => {
     const updated = await booksApi.update(id, updates);
-    setBooks((prev) =>
-      prev.map((book) => (book.id === id ? updated : book))
-    );
+    queryClient.setQueryData(queryKeys.books.detail(id), updated);
+    invalidateBookCaches();
     return updated;
-  }, []);
+  }, [queryClient, invalidateBookCaches]);
 
   const updateBookStatus = useCallback(async (id: string, status: ReadingStatus) => {
     const book = await booksApi.getById(id);
@@ -73,21 +78,11 @@ export function useBooks() {
     }
 
     const updated = await booksApi.update(id, updates);
-    setBooks((prev) =>
-      prev.map((book) => (book.id === id ? updated : book))
-    );
-
+    invalidateBookCaches();
     return updated;
-  }, []);
+  }, [invalidateBookCaches]);
 
-  return {
-    books,
-    uploadBook,
-    uploadBooks,
-    deleteBook,
-    updateBook,
-    updateBookStatus,
-  };
+  return { uploadBook, uploadBooks, deleteBook, updateBook, updateBookStatus };
 }
 
 const PAGE_SIZE = 10;
@@ -97,101 +92,82 @@ export function usePaginatedBooks(filters: {
   sortBy?: string;
   status?: string;
 }) {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const initialLoadDone = useRef(false);
-  const abortRef = useRef<AbortController | null>(null);
+  const queryClient = useQueryClient();
+  const filterKey = useMemo(() => ({
+    search: filters.search,
+    sortBy: filters.sortBy,
+    status: filters.status,
+  }), [filters.search, filters.sortBy, filters.status]);
 
-  const fetchPage = useCallback(async (pageNum: number, append: boolean) => {
-    // Cancel any in-flight request
-    if (!append) {
-      abortRef.current?.abort();
-    }
-    const controller = new AbortController();
-    if (!append) {
-      abortRef.current = controller;
-    }
-
-    try {
-      if (append) {
-        setLoadingMore(true);
-      } else if (!initialLoadDone.current) {
-        setLoading(true);
-      } else {
-        setRefreshing(true);
-      }
-      setError(null);
-
-      const data = await booksApi.listPaged({
-        page: pageNum,
+  const {
+    data,
+    isLoading: loading,
+    isFetchingNextPage: loadingMore,
+    isRefetching: refreshing,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+    error: queryError,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.books.list(filterKey),
+    queryFn: ({ pageParam, signal }) =>
+      booksApi.listPaged({
+        page: pageParam,
         size: PAGE_SIZE,
         search: filters.search || undefined,
         sortBy: filters.sortBy || undefined,
         status: filters.status || undefined,
-      }, controller.signal);
+      }, signal),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.last ? undefined : lastPage.number + 1,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
 
-      const content = data.content ?? [];
-      setBooks(prev => {
-        if (!append) return content;
-        const existingIds = new Set(prev.map(b => b.id));
-        const newBooks = content.filter(b => !existingIds.has(b.id));
-        return [...prev, ...newBooks];
-      });
-      setHasMore(!data.last);
-      setTotalElements(data.totalElements);
-      setPage(data.number);
-      initialLoadDone.current = true;
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : 'Failed to fetch books');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-      setLoadingMore(false);
-    }
-  }, [filters.search, filters.sortBy, filters.status]);
-
-  // Reset when filters change
-  useEffect(() => {
-    setHasMore(true);
-    setPage(0);
-    fetchPage(0, false);
-    return () => { abortRef.current?.abort(); };
-  }, [fetchPage]);
-
-  // Refetch on tab focus
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) fetchPage(0, false);
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [fetchPage]);
+  const books = data?.pages.flatMap(page => page.content) ?? [];
+  const totalElements = data?.pages[0]?.totalElements ?? 0;
+  const hasMore = hasNextPage ?? false;
 
   const loadMore = useCallback(() => {
     if (!loadingMore && hasMore) {
-      fetchPage(page + 1, true);
+      fetchNextPage();
     }
-  }, [loadingMore, hasMore, page, fetchPage]);
-
-  const refetch = useCallback(() => {
-    fetchPage(0, false);
-  }, [fetchPage]);
+  }, [loadingMore, hasMore, fetchNextPage]);
 
   const updateBookInList = useCallback((updatedBook: Book) => {
-    setBooks(prev => prev.map(b => b.id === updatedBook.id ? updatedBook : b));
-  }, []);
+    queryClient.setQueryData<{ pages: PaginatedResponse<Book>[]; pageParams: number[] }>(
+      queryKeys.books.list(filterKey),
+      (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map(page => ({
+            ...page,
+            content: page.content.map(b =>
+              b.id === updatedBook.id ? updatedBook : b
+            ),
+          })),
+        };
+      }
+    );
+  }, [queryClient, filterKey]);
 
   const removeBookFromList = useCallback((id: string) => {
-    setBooks(prev => prev.filter(b => b.id !== id));
-    setTotalElements(prev => Math.max(0, prev - 1));
-  }, []);
+    queryClient.setQueryData<{ pages: PaginatedResponse<Book>[]; pageParams: number[] }>(
+      queryKeys.books.list(filterKey),
+      (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map(page => ({
+            ...page,
+            content: page.content.filter(b => b.id !== id),
+            totalElements: page.totalElements - 1,
+          })),
+        };
+      }
+    );
+  }, [queryClient, filterKey]);
 
   return {
     books,
@@ -200,7 +176,7 @@ export function usePaginatedBooks(filters: {
     loadingMore,
     hasMore,
     totalElements,
-    error,
+    error: queryError ? (queryError as Error).message : null,
     loadMore,
     refetch,
     updateBookInList,
@@ -209,32 +185,16 @@ export function usePaginatedBooks(filters: {
 }
 
 export function useBook(id: string | null) {
-  const [book, setBook] = useState<Book | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: book, isLoading: loading, error: queryError } = useQuery({
+    queryKey: queryKeys.books.detail(id!),
+    queryFn: () => booksApi.getById(id!),
+    enabled: !!id,
+    staleTime: 2 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    if (!id) {
-      setBook(null);
-      setLoading(false);
-      return;
-    }
-
-    const fetchBook = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await booksApi.getById(id);
-        setBook(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch book');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBook();
-  }, [id]);
-
-  return { book, loading, error };
+  return {
+    book: book ?? null,
+    loading,
+    error: queryError ? (queryError as Error).message : null,
+  };
 }

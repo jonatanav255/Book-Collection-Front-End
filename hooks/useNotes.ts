@@ -1,62 +1,52 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notesApi } from '@/services/api';
+import { queryKeys } from './queryKeys';
 import type { Note, CreateNoteRequest, UpdateNoteRequest } from '@/types';
 
 export function useNotes(bookId: string | null, sortBy: 'page' | 'date' = 'page') {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchNotes = useCallback(async () => {
-    if (!bookId) {
-      setNotes([]);
-      setLoading(false);
-      return;
-    }
+  const { data: notes = [], isLoading: loading, error: queryError } = useQuery({
+    queryKey: queryKeys.notes.list(bookId!, sortBy),
+    queryFn: () => notesApi.list(bookId!, sortBy),
+    enabled: !!bookId,
+    staleTime: 60 * 1000,
+  });
 
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await notesApi.list(bookId, sortBy);
-      setNotes(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch notes');
-    } finally {
-      setLoading(false);
-    }
-  }, [bookId, sortBy]);
-
-  useEffect(() => {
-    fetchNotes();
-  }, [fetchNotes]);
-
-  const createNote = useCallback(
-    async (noteData: CreateNoteRequest) => {
-      if (!bookId) throw new Error('No book ID provided');
-
-      const newNote = await notesApi.create(bookId, noteData);
-      setNotes((prev) => [newNote, ...prev]);
-      return newNote;
-    },
-    [bookId]
-  );
+  const createNote = useCallback(async (noteData: CreateNoteRequest) => {
+    if (!bookId) throw new Error('No book ID provided');
+    const newNote = await notesApi.create(bookId, noteData);
+    queryClient.setQueryData<Note[]>(
+      queryKeys.notes.list(bookId, sortBy),
+      (old) => old ? [newNote, ...old] : [newNote]
+    );
+    return newNote;
+  }, [bookId, sortBy, queryClient]);
 
   const updateNote = useCallback(async (noteId: string, updates: UpdateNoteRequest) => {
     const updated = await notesApi.update(noteId, updates);
-    setNotes((prev) =>
-      prev.map((note) => (note.id === noteId ? updated : note))
-    );
+    if (bookId) {
+      queryClient.setQueryData<Note[]>(
+        queryKeys.notes.list(bookId, sortBy),
+        (old) => old?.map(note => note.id === noteId ? updated : note) ?? []
+      );
+    }
     return updated;
-  }, []);
+  }, [bookId, sortBy, queryClient]);
 
   const deleteNote = useCallback(async (noteId: string) => {
     await notesApi.delete(noteId);
-    setNotes((prev) => prev.filter((note) => note.id !== noteId));
-  }, []);
+    if (bookId) {
+      queryClient.setQueryData<Note[]>(
+        queryKeys.notes.list(bookId, sortBy),
+        (old) => old?.filter(note => note.id !== noteId) ?? []
+      );
+    }
+  }, [bookId, sortBy, queryClient]);
 
   const exportNotes = useCallback(async () => {
     if (!bookId) throw new Error('No book ID provided');
-
     const blob = await notesApi.export(bookId);
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -71,8 +61,8 @@ export function useNotes(bookId: string | null, sortBy: 'page' | 'date' = 'page'
   return {
     notes,
     loading,
-    error,
-    refetch: fetchNotes,
+    error: queryError ? (queryError as Error).message : null,
+    refetch: () => bookId ? queryClient.invalidateQueries({ queryKey: queryKeys.notes.list(bookId, sortBy) }) : undefined,
     createNote,
     updateNote,
     deleteNote,

@@ -139,11 +139,13 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
         <div className={`break-words markdown-content ${isExpanded ? '' : 'line-clamp-3'}`}>
           <ReactMarkdown
             components={{
-              code({ inline, className, children, ...props }: { inline?: boolean; className?: string; children?: React.ReactNode; [key: string]: unknown }) {
+              code({ className, children, ...props }) {
+                const inline = !className;
                 const match = /language-(\w+)/.exec(className || '');
                 return !inline && match ? (
                   <div style={codeBlockStyles[note.color]} className="rounded-lg overflow-hidden my-2">
                     <SyntaxHighlighter
+                      // @ts-expect-error — vscDarkPlus type doesn't match SyntaxHighlighter's expected union
                       style={vscDarkPlus}
                       language={match[1]}
                       PreTag="div"

@@ -1,61 +1,33 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { preferencesApi } from '@/services/api';
+import { queryKeys } from './queryKeys';
 import type { Preferences, UpdatePreferencesRequest, ThemePreset, FontSize } from '@/types';
 
 export function usePreferences() {
-  const [preferences, setPreferences] = useState<Preferences | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchPreferences = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await preferencesApi.get();
-      setPreferences(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch preferences');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data: preferences, isLoading: loading, error: queryError } = useQuery({
+    queryKey: queryKeys.preferences.all,
+    queryFn: () => preferencesApi.get(),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    fetchPreferences();
-  }, [fetchPreferences]);
-
-  const updatePreferences = useCallback(async (updates: UpdatePreferencesRequest) => {
+  const updatePreferences = async (updates: UpdatePreferencesRequest) => {
     const updated = await preferencesApi.update(updates);
-    setPreferences(updated);
+    queryClient.setQueryData(queryKeys.preferences.all, updated);
     return updated;
-  }, []);
+  };
 
-  const setTheme = useCallback(
-    async (theme: ThemePreset) => {
-      return updatePreferences({ theme });
-    },
-    [updatePreferences]
-  );
-
-  const setFontSize = useCallback(
-    async (fontSize: FontSize) => {
-      return updatePreferences({ fontSize });
-    },
-    [updatePreferences]
-  );
-
-  const setFontFamily = useCallback(
-    async (fontFamily: string) => {
-      return updatePreferences({ fontFamily });
-    },
-    [updatePreferences]
-  );
+  const setTheme = async (theme: ThemePreset) => updatePreferences({ theme });
+  const setFontSize = async (fontSize: FontSize) => updatePreferences({ fontSize });
+  const setFontFamily = async (fontFamily: string) => updatePreferences({ fontFamily });
 
   return {
-    preferences,
+    preferences: preferences ?? null,
     loading,
-    error,
-    refetch: fetchPreferences,
+    error: queryError ? (queryError as Error).message : null,
+    refetch: () => queryClient.invalidateQueries({ queryKey: queryKeys.preferences.all }),
     updatePreferences,
     setTheme,
     setFontSize,

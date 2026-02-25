@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { Book } from '@/types';
 import { booksApi } from '@/services/api';
 import { useBookCover } from '@/hooks/useBookCover';
+import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/hooks/queryKeys';
 import { Loading } from '../common/Loading';
 
 interface FeaturedBooksProps {
@@ -14,46 +16,12 @@ interface FeaturedBooksProps {
 }
 
 export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchFeaturedBooks = async () => {
-      try {
-        setLoading(true);
-        const featuredBooks = await booksApi.getFeatured(limit);
-        setBooks(featuredBooks);
-      } catch {
-        setError('Failed to load featured books');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFeaturedBooks();
-
-    // Refetch silently when user returns (tab switch or window focus from in-app navigation)
-    const refetchSilently = async () => {
-      try {
-        const featuredBooks = await booksApi.getFeatured(limit);
-        setBooks(featuredBooks);
-      } catch {
-        // silently ignore refetch errors
-      }
-    };
-    const handleVisibilityChange = () => {
-      if (!document.hidden) refetchSilently();
-    };
-    const handleFocus = () => refetchSilently();
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [limit]);
+  const { data: books = [], isLoading: loading, error } = useQuery({
+    queryKey: queryKeys.books.featured(limit),
+    queryFn: () => booksApi.getFeatured(limit),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
 
   if (loading) {
     return (
@@ -66,7 +34,7 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
   if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600 dark:text-red-400">{error}</p>
+        <p className="text-red-600 dark:text-red-400">{(error as Error).message}</p>
       </div>
     );
   }

@@ -1,34 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { BookOpen, BookCheck, FileText, TrendingUp } from 'lucide-react';
-
-interface Stats {
-  totalBooks: number;
-  readingBooks: number;
-  finishedBooks: number;
-  unreadBooks: number;
-  totalPages: number;
-  totalPagesRead: number;
-}
+import { useStats } from '@/hooks/useStats';
 
 export function ReadingStats() {
-  const [stats, setStats] = useState<Stats | null>(null);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-        const res = await fetch(`${API_URL}/books/stats`);
-        if (res.ok) {
-          setStats(await res.json());
-        }
-      } catch {
-        // silently ignore
-      }
-    };
-    fetchStats();
-  }, []);
+  const { data: stats } = useStats();
 
   if (!stats || stats.totalBooks === 0) return null;
 
