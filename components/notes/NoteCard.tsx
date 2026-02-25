@@ -139,7 +139,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
         <div className={`break-words markdown-content ${isExpanded ? '' : 'line-clamp-3'}`}>
           <ReactMarkdown
             components={{
-              code({ node, inline, className, children, ...props }: any) {
+              code({ inline, className, children, ...props }: { inline?: boolean; className?: string; children?: React.ReactNode; [key: string]: unknown }) {
                 const match = /language-(\w+)/.exec(className || '');
                 return !inline && match ? (
                   <div style={codeBlockStyles[note.color]} className="rounded-lg overflow-hidden my-2">

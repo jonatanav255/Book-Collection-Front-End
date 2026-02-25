@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Library, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback, DragEvent } from 'react';
+import { Library, ArrowLeft, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { useBooks, usePaginatedBooks } from '@/hooks/useBooks';
 import { useToast } from '@/components/common/Toast';
@@ -33,6 +33,8 @@ export default function AllBooksPage() {
   const [batchIndex, setBatchIndex] = useState(0);
   const [batchComplete, setBatchComplete] = useState(false);
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounterRef = useRef(0);
 
   const debouncedSearch = useDebounce(search, 150);
 
@@ -55,6 +57,7 @@ export default function AllBooksPage() {
 
   const { uploadBook, uploadBooks, deleteBook, updateBookStatus, updateBook } = useBooks();
   const { showToast } = useToast();
+  const hasBooks = books.length > 0;
 
   // Scroll to top on mount and when search/filters change
   useEffect(() => {
@@ -81,7 +84,7 @@ export default function AllBooksPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [books.length > 0, debouncedSearch, sortBy, statusFilter]); // re-attach when filters change or sentinel appears/disappears
+  }, [hasBooks, debouncedSearch, sortBy, statusFilter]); // re-attach when filters change or sentinel appears/disappears
 
   // Fetch stats from the stats endpoint
   const [stats, setStats] = useState({ total: 0, reading: 0, finished: 0, unread: 0 });
@@ -107,7 +110,7 @@ export default function AllBooksPage() {
     fetchStats();
   }, [fetchStats]);
 
-  const handleUpload = async (files: File[]) => {
+  const handleUpload = useCallback(async (files: File[]) => {
     if (files.length === 1) {
       try {
         setUploading(true);
@@ -149,7 +152,48 @@ export default function AllBooksPage() {
     if (skipped > 0) parts.push(`${skipped} skipped`);
     if (failed > 0) parts.push(`${failed} failed`);
     showToast(parts.join(', '), failed > 0 ? 'error' : 'success');
-  };
+  }, [uploadBook, uploadBooks, showToast, refetch, fetchStats]);
+
+  const handleDragEnter = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current++;
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault();
+  }, []);
+
+  const handleDrop = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setIsDragging(false);
+
+    const allFiles = Array.from(e.dataTransfer.files);
+    const pdfFiles = allFiles.filter(f => f.type === 'application/pdf');
+
+    if (pdfFiles.length === 0) {
+      showToast('Only PDF files are accepted', 'warning');
+      return;
+    }
+
+    const nonPdfCount = allFiles.length - pdfFiles.length;
+    if (nonPdfCount > 0) {
+      showToast(`${nonPdfCount} non-PDF file${nonPdfCount > 1 ? 's were' : ' was'} ignored`, 'warning');
+    }
+
+    handleUpload(pdfFiles);
+  }, [handleUpload, showToast]);
 
   const handleDelete = useCallback(async (id: string) => {
     try {
@@ -157,7 +201,7 @@ export default function AllBooksPage() {
       removeBookFromList(id);
       showToast('Book deleted successfully', 'success');
       fetchStats();
-    } catch (err) {
+    } catch {
       showToast('Failed to delete book', 'error');
     }
   }, [deleteBook, removeBookFromList, showToast, fetchStats]);
@@ -168,7 +212,7 @@ export default function AllBooksPage() {
       if (updated) updateBookInList(updated);
       showToast('Book status updated', 'success');
       fetchStats();
-    } catch (err) {
+    } catch {
       showToast('Failed to update book status', 'error');
     }
   }, [updateBookStatus, updateBookInList, showToast, fetchStats]);
@@ -178,7 +222,7 @@ export default function AllBooksPage() {
       const updated = await updateBook(id, { title });
       if (updated) updateBookInList(updated);
       showToast('Book renamed successfully', 'success');
-    } catch (err) {
+    } catch {
       showToast('Failed to rename book', 'error');
     }
   }, [updateBook, updateBookInList, showToast]);
@@ -199,7 +243,23 @@ export default function AllBooksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div
+      className="min-h-screen bg-gray-50 dark:bg-gray-900 relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Drop Overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 z-50 bg-blue-500/10 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+          <div className="border-4 border-dashed border-blue-500 rounded-2xl p-12 bg-white/80 dark:bg-gray-800/80 text-center">
+            <Upload className="w-12 h-12 text-blue-500 mx-auto mb-3" />
+            <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">Drop PDFs here</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Upload one or multiple PDF files</p>
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -217,14 +277,17 @@ export default function AllBooksPage() {
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                   All Books
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                  {stats.total} books • {stats.reading} reading • {stats.finished} finished
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                  {stats.total} books • <span className="text-blue-500 dark:text-blue-400">{stats.reading} reading</span> • <span className="text-green-500 dark:text-green-400">{stats.finished} finished</span>
                 </p>
               </div>
             </div>
           </div>
 
-          <UploadButton onUpload={handleUpload} isLoading={uploading} />
+          <div className="flex flex-col items-end gap-2">
+            <UploadButton onUpload={handleUpload} isLoading={uploading} />
+            <p className="text-xs text-gray-500 dark:text-gray-300">or drag & drop PDFs anywhere</p>
+          </div>
         </div>
 
         {/* Search and Filters */}

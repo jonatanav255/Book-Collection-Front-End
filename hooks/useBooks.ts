@@ -6,13 +6,9 @@ export function useBooks() {
   const [books, setBooks] = useState<Book[]>([]);
 
   const uploadBook = useCallback(async (file: File) => {
-    try {
-      const newBook = await booksApi.upload(file);
-      setBooks((prev) => [newBook, ...prev]);
-      return newBook;
-    } catch (err) {
-      throw err;
-    }
+    const newBook = await booksApi.upload(file);
+    setBooks((prev) => [newBook, ...prev]);
+    return newBook;
   }, []);
 
   const uploadBooks = useCallback(
@@ -54,46 +50,34 @@ export function useBooks() {
   );
 
   const deleteBook = useCallback(async (id: string) => {
-    try {
-      await booksApi.delete(id);
-      setBooks((prev) => prev.filter((book) => book.id !== id));
-    } catch (err) {
-      throw err;
-    }
+    await booksApi.delete(id);
+    setBooks((prev) => prev.filter((book) => book.id !== id));
   }, []);
 
   const updateBook = useCallback(async (id: string, updates: Partial<Book>) => {
-    try {
-      const updated = await booksApi.update(id, updates);
-      setBooks((prev) =>
-        prev.map((book) => (book.id === id ? updated : book))
-      );
-      return updated;
-    } catch (err) {
-      throw err;
-    }
+    const updated = await booksApi.update(id, updates);
+    setBooks((prev) =>
+      prev.map((book) => (book.id === id ? updated : book))
+    );
+    return updated;
   }, []);
 
   const updateBookStatus = useCallback(async (id: string, status: ReadingStatus) => {
-    try {
-      const book = await booksApi.getById(id);
-      const updates: Partial<Pick<Book, 'status' | 'currentPage'>> = { status };
+    const book = await booksApi.getById(id);
+    const updates: Partial<Pick<Book, 'status' | 'currentPage'>> = { status };
 
-      if (status === 'FINISHED' && book.pageCount > 0) {
-        updates.currentPage = book.pageCount;
-      } else if (status === 'UNREAD') {
-        updates.currentPage = 0;
-      }
-
-      const updated = await booksApi.update(id, updates);
-      setBooks((prev) =>
-        prev.map((book) => (book.id === id ? updated : book))
-      );
-
-      return updated;
-    } catch (err) {
-      throw err;
+    if (status === 'FINISHED' && book.pageCount > 0) {
+      updates.currentPage = book.pageCount;
+    } else if (status === 'UNREAD') {
+      updates.currentPage = 0;
     }
+
+    const updated = await booksApi.update(id, updates);
+    setBooks((prev) =>
+      prev.map((book) => (book.id === id ? updated : book))
+    );
+
+    return updated;
   }, []);
 
   return {

@@ -172,7 +172,7 @@ export default function ReaderPage() {
     try {
       await createNote(note);
       showToast('Note created successfully', 'success');
-    } catch (err) {
+    } catch {
       showToast('Failed to create note', 'error');
     }
   };
@@ -181,7 +181,7 @@ export default function ReaderPage() {
     try {
       await updateNote(id, updates);
       showToast('Note updated successfully', 'success');
-    } catch (err) {
+    } catch {
       showToast('Failed to update note', 'error');
     }
   };
@@ -190,7 +190,7 @@ export default function ReaderPage() {
     try {
       await deleteNote(id);
       showToast('Note deleted successfully', 'success');
-    } catch (err) {
+    } catch {
       showToast('Failed to delete note', 'error');
     }
   };
@@ -199,7 +199,7 @@ export default function ReaderPage() {
     try {
       await exportNotes();
       showToast('Notes exported successfully', 'success');
-    } catch (err) {
+    } catch {
       showToast('Failed to export notes', 'error');
     }
   };

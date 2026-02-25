@@ -25,13 +25,9 @@ export function usePreferences() {
   }, [fetchPreferences]);
 
   const updatePreferences = useCallback(async (updates: UpdatePreferencesRequest) => {
-    try {
-      const updated = await preferencesApi.update(updates);
-      setPreferences(updated);
-      return updated;
-    } catch (err) {
-      throw err;
-    }
+    const updated = await preferencesApi.update(updates);
+    setPreferences(updated);
+    return updated;
   }, []);
 
   const setTheme = useCallback(

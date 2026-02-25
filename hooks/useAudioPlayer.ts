@@ -45,7 +45,7 @@ export function useAudioPlayer({
       try {
         const status = await audioApi.checkAudioStatus(bookId, currentPage);
         setIsCached(status.cached);
-      } catch (err) {
+      } catch {
         // Silently fail - cache status is just for UI feedback
         setIsCached(false);
       }

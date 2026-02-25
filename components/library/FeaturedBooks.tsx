@@ -24,7 +24,7 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
         setLoading(true);
         const featuredBooks = await booksApi.getFeatured(limit);
         setBooks(featuredBooks);
-      } catch (err) {
+      } catch {
         setError('Failed to load featured books');
       } finally {
         setLoading(false);

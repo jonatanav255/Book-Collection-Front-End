@@ -26,7 +26,7 @@ export default function HomePage() {
         setUploading(true);
         await uploadBook(files[0]);
         showToast('Book uploaded successfully!', 'success');
-      } catch (err) {
+      } catch {
         showToast('Failed to upload book. Please try again.', 'error');
       } finally {
         setUploading(false);

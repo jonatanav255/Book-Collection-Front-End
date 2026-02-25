@@ -98,7 +98,7 @@ export function ReadingStats() {
         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Progress</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-300">
               {stats.totalPagesRead.toLocaleString()} / {stats.totalPages.toLocaleString()} pages ({progressPercent}%)
             </p>
           </div>

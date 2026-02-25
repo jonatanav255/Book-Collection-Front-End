@@ -50,7 +50,7 @@ export function BatchAudioGenerator({ bookId, onComplete, onError }: BatchAudioG
             onError?.(statusData.errorMessage);
           }
         }
-      } catch (err) {
+      } catch {
         // Silently handle polling errors
       }
     };

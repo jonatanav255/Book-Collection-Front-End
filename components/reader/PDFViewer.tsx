@@ -179,7 +179,7 @@ export function PDFViewer({
           textLayerInstanceRef.current = textLayer;
           await textLayer.render();
         }
-      } catch (err: any) {
+      } catch {
         // Silently handle rendering errors (except cancellation which is expected)
       }
     };
