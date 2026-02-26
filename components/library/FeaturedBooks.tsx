@@ -16,6 +16,7 @@ interface FeaturedBooksProps {
 }
 
 export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
+  const [navigating, setNavigating] = useState(false);
   // Cached for 5 min — featured books don't change often
   // refetchOnWindowFocus deduplicates tab switches (one fetch vs previous 3)
   const { data: books = [], isLoading: loading, error } = useQuery({
@@ -59,10 +60,20 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
         </div>
         <Link
           href="/library"
+          onClick={() => setNavigating(true)}
           className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-cyan-500/25"
         >
-          All Books
-          <ChevronRight className="w-4 h-4" />
+          {navigating ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            <>
+              All Books
+              <ChevronRight className="w-4 h-4" />
+            </>
+          )}
         </Link>
       </div>
 
