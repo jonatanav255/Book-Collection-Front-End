@@ -131,6 +131,8 @@ export function useAudioPlayer({
         audio.oncanplay = () => {
           setIsLoading(false);
           isLoadingRef.current = false;
+          // Audio loaded successfully — backend cached it, update indicator instantly
+          setIsCached(true);
         };
 
         audio.onplay = () => {
