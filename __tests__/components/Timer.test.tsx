@@ -76,18 +76,15 @@ describe('Timer', () => {
     expect(screen.getByRole('button', { name: /reset/i })).toBeInTheDocument();
   });
 
-  it('formatTime formats 90 seconds as 1:30', () => {
-    // Set countdown to 90 seconds via minute/second inputs
+  it('displays time in MM:SS format', () => {
     renderTimer();
-
-    // Default 25:00 is displayed — just verify the format pattern MM:SS
+    // Default 25:00 is displayed — verify the MM:SS format pattern
     const timeDisplay = screen.getByText(/\d+:\d{2}/);
     expect(timeDisplay).toBeInTheDocument();
   });
 
-  it('getProgress: count-up mode shows 0:00 initially', () => {
+  it('count-up mode button is present and clickable', () => {
     renderTimer();
-    // Just verify count-up button exists — interaction tested separately without fake timers
     expect(screen.getByRole('button', { name: /count up/i })).toBeInTheDocument();
   });
 

@@ -127,6 +127,30 @@ describe('useProgress', () => {
     expect(progressApi.update).not.toHaveBeenCalled();
   });
 
+  it('flushes pending debounced update on unmount', async () => {
+    const mockProgress = { currentPage: 1, status: 'READING', progressPercentage: 5 };
+    vi.mocked(progressApi.get).mockResolvedValue(mockProgress as any);
+    vi.mocked(progressApi.update).mockResolvedValue(mockProgress as any);
+
+    const { result, unmount } = renderHook(() => useProgress('book-flush'));
+    await act(async () => {});
+
+    // Queue a debounced update without advancing timers
+    act(() => {
+      result.current.updateProgress({ currentPage: 99 });
+    });
+
+    // API not called yet
+    expect(progressApi.update).not.toHaveBeenCalled();
+
+    // Unmount should flush the pending update
+    await act(async () => {
+      unmount();
+    });
+
+    expect(progressApi.update).toHaveBeenCalledWith('book-flush', { currentPage: 99 });
+  });
+
   it('setCurrentPage calls updateProgress with currentPage field', async () => {
     const mockProgress = { currentPage: 1, status: 'READING', progressPercentage: 5 };
     vi.mocked(progressApi.get).mockResolvedValue(mockProgress as any);

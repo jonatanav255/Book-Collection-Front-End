@@ -24,13 +24,17 @@ vi.mock('@/services/api', () => ({
 
 import { booksApi } from '@/services/api';
 
+let queryClient: QueryClient;
+
 function wrapper({ children }: { children: React.ReactNode }) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 
 describe('useBooks', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  });
 
   it('uploadBook calls booksApi.upload and returns result', async () => {
     const book = { id: '1', title: 'My Book' };

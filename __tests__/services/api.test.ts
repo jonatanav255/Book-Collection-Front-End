@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { booksApi, notesApi, progressApi, audioApi, ApiError } from '@/services/api';
+import { booksApi, notesApi, progressApi, preferencesApi, audioApi, ApiError } from '@/services/api';
 
 // Polyfill global fetch
 const mockFetch = vi.fn();
@@ -85,6 +85,79 @@ describe('progressApi', () => {
         method: 'PUT',
         headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ currentPage: 30 }),
+      })
+    );
+  });
+});
+
+describe('notesApi', () => {
+  beforeEach(() => mockFetch.mockReset());
+
+  it('list fetches correct URL', async () => {
+    mockFetch.mockResolvedValue(makeResponse(200, []));
+
+    await notesApi.list('book-1');
+
+    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/books/book-1/notes'));
+  });
+
+  it('list appends sortBy param when provided', async () => {
+    mockFetch.mockResolvedValue(makeResponse(200, []));
+
+    await notesApi.list('book-1', 'date');
+
+    const calledUrl = mockFetch.mock.calls[0][0] as string;
+    expect(calledUrl).toContain('sortBy=date');
+  });
+
+  it('create sends POST with JSON body', async () => {
+    const note = { id: 'n1', content: 'Hello', pageNumber: 3, color: 'blue', pinned: false };
+    mockFetch.mockResolvedValue(makeResponse(200, note));
+
+    await notesApi.create('book-1', { pageNumber: 3, content: 'Hello', color: 'blue', pinned: false });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/books/book-1/notes'),
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+      })
+    );
+  });
+
+  it('delete sends DELETE to notes endpoint', async () => {
+    mockFetch.mockResolvedValue(makeResponse(204, null));
+
+    await notesApi.delete('note-42');
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/notes/note-42'),
+      expect.objectContaining({ method: 'DELETE' })
+    );
+  });
+});
+
+describe('preferencesApi', () => {
+  beforeEach(() => mockFetch.mockReset());
+
+  it('get fetches /preferences', async () => {
+    mockFetch.mockResolvedValue(makeResponse(200, { theme: 'dark' }));
+
+    await preferencesApi.get();
+
+    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/preferences'));
+  });
+
+  it('update sends PUT with JSON body', async () => {
+    mockFetch.mockResolvedValue(makeResponse(200, { theme: 'light' }));
+
+    await preferencesApi.update({ theme: 'light' } as any);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/preferences'),
+      expect.objectContaining({
+        method: 'PUT',
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
       })
     );
   });

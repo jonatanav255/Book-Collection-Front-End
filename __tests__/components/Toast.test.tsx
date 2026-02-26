@@ -70,19 +70,22 @@ describe('Toast / useToast', () => {
 
   it('auto-dismisses after 5 seconds', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const user = userEvent.setup({ delay: null, advanceTimers: vi.advanceTimersByTime.bind(vi) });
-    render(<Wrapper><ToastTrigger /></Wrapper>);
+    try {
+      const user = userEvent.setup({ delay: null, advanceTimers: vi.advanceTimersByTime.bind(vi) });
+      render(<Wrapper><ToastTrigger /></Wrapper>);
 
-    await act(async () => {
-      await user.click(screen.getByRole('button', { name: 'show warning' }));
-    });
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+      await act(async () => {
+        await user.click(screen.getByRole('button', { name: 'show warning' }));
+      });
+      expect(screen.getByRole('alert')).toBeInTheDocument();
 
-    act(() => {
-      vi.advanceTimersByTime(5001);
-    });
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    vi.useRealTimers();
+      act(() => {
+        vi.advanceTimersByTime(5001);
+      });
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   }, 10000);
 
   it('defaults to info type when no type is provided', async () => {
