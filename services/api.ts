@@ -313,4 +313,23 @@ export const audioApi = {
   },
 };
 
+// Collection API — download Insomnia collection export
+export const collectionApi = {
+  async downloadInsomnia(): Promise<void> {
+    const response = await fetch(`${API_URL}/collection/insomnia`);
+    if (!response.ok) {
+      throw new ApiError(response.status, 'Failed to download API collection');
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bookshelf-api-insomnia.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+};
+
 export { ApiError };

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Library } from 'lucide-react';
+import { Library, Download } from 'lucide-react';
+import { collectionApi } from '@/services/api';
 import { useToast } from '@/components/common/Toast';
 import { UploadButton } from '@/components/library/UploadButton';
 import { FeaturedBooks } from '@/components/library/FeaturedBooks';
@@ -16,6 +17,7 @@ export default function HomePage() {
   const [batchIndex, setBatchIndex] = useState(0);
   const [batchComplete, setBatchComplete] = useState(false);
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const { uploadBook, uploadBooks } = useBooks();
   const { showToast } = useToast();
@@ -73,7 +75,28 @@ export default function HomePage() {
             </div>
           </div>
 
-          <UploadButton onUpload={handleUpload} isLoading={uploading} />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={async () => {
+                if (downloading) return;
+                try {
+                  setDownloading(true);
+                  await collectionApi.downloadInsomnia();
+                  showToast('API collection downloaded!', 'success');
+                } catch {
+                  showToast('Failed to download API collection.', 'error');
+                } finally {
+                  setDownloading(false);
+                }
+              }}
+              disabled={downloading}
+              className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Download API collection for Insomnia"
+            >
+              <Download className={`w-5 h-5 ${downloading ? 'animate-pulse' : ''}`} />
+            </button>
+            <UploadButton onUpload={handleUpload} isLoading={uploading} />
+          </div>
         </div>
 
         {/* Featured Books - Recently Read */}
