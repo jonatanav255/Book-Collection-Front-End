@@ -8,6 +8,7 @@ import { Book, ReadingStatus } from '@/types';
 import { useBookCover } from '@/hooks/useBookCover';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { useLanguage } from '@/i18n';
 
 interface BookCardProps {
   book: Book;
@@ -24,6 +25,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
   const [isOpening, setIsOpening] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
 
   const closeMenu = useCallback(() => setShowMenu(false), []);
   useClickOutside(menuRef, closeMenu, showMenu);
@@ -73,7 +75,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
                   />
                 </div>
                 <p className="text-white text-xs mt-1 font-medium">
-                  {book.status === 'FINISHED' ? 'Complete' : `${progress}% complete`}
+                  {book.status === 'FINISHED' ? t('library.complete') : t('library.percentComplete', { percent: progress })}
                 </p>
               </div>
             )}
@@ -132,13 +134,13 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
                   : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
               }`}
             >
-              {book.status.toLowerCase()}
+              {book.status === 'FINISHED' ? t('library.finishedStatus') : book.status === 'READING' ? t('library.readingStatus') : t('library.unread')}
             </span>
 
             {/* More Options Button */}
             <button
               onClick={() => setShowMenu(!showMenu)}
-              aria-label="More options"
+              aria-label={t('common.moreOptions')}
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -157,7 +159,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
                   className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left rounded-t-lg"
                 >
                   <BookX className="w-4 h-4" />
-                  Mark as Unread
+                  {t('library.markAsUnread')}
                 </button>
               )}
               {book.status !== 'READING' && onStatusChange && (
@@ -169,7 +171,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
                   className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
                 >
                   <BookOpen className="w-4 h-4" />
-                  Mark as Reading
+                  {t('library.markAsReading')}
                 </button>
               )}
               {book.status !== 'FINISHED' && onStatusChange && (
@@ -181,7 +183,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
                   className="flex items-center gap-2 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
                 >
                   <CheckCircle className="w-4 h-4" />
-                  Mark as Complete
+                  {t('library.markAsComplete')}
                 </button>
               )}
               {onRename && (
@@ -194,7 +196,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
                   className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
                 >
                   <Pencil className="w-4 h-4" />
-                  Rename
+                  {t('library.rename')}
                 </button>
               )}
               <button
@@ -205,7 +207,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
                 className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left rounded-b-lg"
               >
                 <Trash2 className="w-4 h-4" />
-                Delete
+                {t('common.delete')}
               </button>
             </div>
           )}
@@ -216,9 +218,9 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={() => onDelete(book.id)}
-        title="Delete Book"
-        message={`Are you sure you want to delete "${book.title}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title={t('library.deleteBook')}
+        message={t('library.deleteBookMessage', { title: book.title })}
+        confirmText={t('common.delete')}
         variant="danger"
       />
     </>

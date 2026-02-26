@@ -10,6 +10,8 @@ import { FeaturedBooks } from '@/components/library/FeaturedBooks';
 import { ReadingStats } from '@/components/library/ReadingStats';
 import { BatchUploadProgress } from '@/components/library/BatchUploadProgress';
 import { useBooks } from '@/hooks/useBooks';
+import { LanguageToggle } from '@/components/common/LanguageToggle';
+import { useLanguage } from '@/i18n';
 import type { BatchUploadFileResult } from '@/types';
 
 export default function HomePage() {
@@ -22,15 +24,16 @@ export default function HomePage() {
 
   const { uploadBook, uploadBooks } = useBooks();
   const { showToast } = useToast();
+  const { t } = useLanguage();
 
   const handleUpload = async (files: File[]) => {
     if (files.length === 1) {
       try {
         setUploading(true);
         await uploadBook(files[0]);
-        showToast('Book uploaded successfully!', 'success');
+        showToast(t('home.bookUploadedSuccess'), 'success');
       } catch {
-        showToast('Failed to upload book. Please try again.', 'error');
+        showToast(t('home.failedToUpload'), 'error');
       } finally {
         setUploading(false);
       }
@@ -53,9 +56,9 @@ export default function HomePage() {
     const uploaded = results.filter((r) => r.status === 'success').length;
     const skipped = results.filter((r) => r.status === 'skipped').length;
     const failed = results.filter((r) => r.status === 'failed').length;
-    const parts = [`${uploaded} uploaded`];
-    if (skipped > 0) parts.push(`${skipped} skipped`);
-    if (failed > 0) parts.push(`${failed} failed`);
+    const parts = [t('home.uploaded', { count: uploaded })];
+    if (skipped > 0) parts.push(t('home.skipped', { count: skipped }));
+    if (failed > 0) parts.push(t('home.failed', { count: failed }));
     showToast(parts.join(', '), failed > 0 ? 'error' : 'success');
   };
 
@@ -68,15 +71,16 @@ export default function HomePage() {
             <Library className="w-8 h-8 text-blue-400" />
             <div>
               <h1 className="text-3xl font-bold text-white">
-                BookShelf
+                {t('home.title')}
               </h1>
               <p className="text-sm text-gray-300">
-                Your personal reading collection
+                {t('home.subtitle')}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            <LanguageToggle />
             <Button
               variant="primary"
               onClick={async () => {
@@ -84,9 +88,9 @@ export default function HomePage() {
                 try {
                   setDownloading(true);
                   await collectionApi.downloadInsomnia();
-                  showToast('API collection downloaded!', 'success');
+                  showToast(t('home.apiCollectionDownloaded'), 'success');
                 } catch {
-                  showToast('Failed to download API collection.', 'error');
+                  showToast(t('home.failedToDownloadApi'), 'error');
                 } finally {
                   setDownloading(false);
                 }
@@ -95,7 +99,7 @@ export default function HomePage() {
               className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-emerald-500/25"
             >
               <Download className="w-5 h-5" />
-              API Collection
+              {t('home.apiCollection')}
             </Button>
             <UploadButton onUpload={handleUpload} isLoading={uploading} />
           </div>

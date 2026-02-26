@@ -16,7 +16,9 @@ import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { BatchAudioGenerator } from '@/components/audio/BatchAudioGenerator';
 import { Modal } from '@/components/common/Modal';
 import { Loading } from '@/components/common/Loading';
+import { LanguageToggle } from '@/components/common/LanguageToggle';
 import { booksApi } from '@/services/api';
+import { useLanguage } from '@/i18n';
 import { CreateNoteRequest, UpdateNoteRequest } from '@/types';
 
 export default function ReaderPage() {
@@ -44,6 +46,7 @@ export default function ReaderPage() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   const { showToast } = useToast();
+  const { t } = useLanguage();
 
   // Handle page change
   const handlePageChange = useCallback(
@@ -73,11 +76,11 @@ export default function ReaderPage() {
         handlePageChange(currentPage + 1);
       } else {
         stop();
-        showToast('Finished reading the book!', 'success');
+        showToast(t('reader.finishedReading'), 'success');
       }
     },
     onError: (error) => {
-      showToast(error.message || 'Failed to play audio', 'error');
+      showToast(error.message || t('reader.failedToPlayAudio'), 'error');
     },
   });
 
@@ -171,43 +174,43 @@ export default function ReaderPage() {
   const handleCreateNote = async (note: CreateNoteRequest) => {
     try {
       await createNote(note);
-      showToast('Note created successfully', 'success');
+      showToast(t('reader.noteCreatedSuccess'), 'success');
     } catch {
-      showToast('Failed to create note', 'error');
+      showToast(t('reader.failedToCreateNote'), 'error');
     }
   };
 
   const handleUpdateNote = async (id: string, updates: UpdateNoteRequest) => {
     try {
       await updateNote(id, updates);
-      showToast('Note updated successfully', 'success');
+      showToast(t('reader.noteUpdatedSuccess'), 'success');
     } catch {
-      showToast('Failed to update note', 'error');
+      showToast(t('reader.failedToUpdateNote'), 'error');
     }
   };
 
   const handleDeleteNote = async (id: string) => {
     try {
       await deleteNote(id);
-      showToast('Note deleted successfully', 'success');
+      showToast(t('reader.noteDeletedSuccess'), 'success');
     } catch {
-      showToast('Failed to delete note', 'error');
+      showToast(t('reader.failedToDeleteNote'), 'error');
     }
   };
 
   const handleExportNotes = async () => {
     try {
       await exportNotes();
-      showToast('Notes exported successfully', 'success');
+      showToast(t('reader.notesExportedSuccess'), 'success');
     } catch {
-      showToast('Failed to export notes', 'error');
+      showToast(t('reader.failedToExportNotes'), 'error');
     }
   };
 
   if (bookLoading || !book) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Loading size="lg" text="Loading book..." />
+        <Loading size="lg" text={t('reader.loadingBook')} />
       </div>
     );
   }
@@ -277,7 +280,7 @@ export default function ReaderPage() {
       <Modal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-        title="Reading Preferences"
+        title={t('reader.readingPreferences')}
         size="lg"
       >
         <div className="space-y-6">
@@ -286,10 +289,17 @@ export default function ReaderPage() {
           <hr className="border-gray-200 dark:border-gray-700" />
 
           <div>
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Audio</h3>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('settings.language')}</h3>
+            <LanguageToggle />
+          </div>
+
+          <hr className="border-gray-200 dark:border-gray-700" />
+
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('settings.audioHeading')}</h3>
             <BatchAudioGenerator
               bookId={bookId}
-              onComplete={() => showToast('Batch generation completed!', 'success')}
+              onComplete={() => showToast(t('reader.batchGenerationCompleted'), 'success')}
               onError={(error) => showToast(error, 'error')}
             />
           </div>

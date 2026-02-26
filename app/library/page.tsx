@@ -15,6 +15,7 @@ import { BatchUploadProgress } from '@/components/library/BatchUploadProgress';
 import { ReadingStatus } from '@/types';
 import type { BatchUploadFileResult } from '@/types';
 import { ApiError } from '@/services/api';
+import { useLanguage } from '@/i18n';
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -59,6 +60,7 @@ export default function AllBooksPage() {
   const { uploadBook, uploadBooks, deleteBook, updateBookStatus, updateBook } = useBooks();
   const { data: statsData } = useStats();
   const { showToast } = useToast();
+  const { t } = useLanguage();
   const hasBooks = books.length > 0;
 
   const stats = {
@@ -100,12 +102,12 @@ export default function AllBooksPage() {
       try {
         setUploading(true);
         await uploadBook(files[0]);
-        showToast('Book uploaded successfully!', 'success');
+        showToast(t('library.bookUploadedSuccess'), 'success');
       } catch (err) {
         if (err instanceof ApiError && err.status === 409) {
-          showToast('This book already exists in your library.', 'error');
+          showToast(t('library.bookAlreadyExists'), 'error');
         } else {
-          showToast('Failed to upload book. Please try again.', 'error');
+          showToast(t('library.failedToUpload'), 'error');
         }
       } finally {
         setUploading(false);
@@ -129,11 +131,11 @@ export default function AllBooksPage() {
     const uploaded = results.filter((r) => r.status === 'success').length;
     const skipped = results.filter((r) => r.status === 'skipped').length;
     const failed = results.filter((r) => r.status === 'failed').length;
-    const parts = [`${uploaded} uploaded`];
-    if (skipped > 0) parts.push(`${skipped} skipped`);
-    if (failed > 0) parts.push(`${failed} failed`);
+    const parts = [t('home.uploaded', { count: uploaded })];
+    if (skipped > 0) parts.push(t('home.skipped', { count: skipped }));
+    if (failed > 0) parts.push(t('home.failed', { count: failed }));
     showToast(parts.join(', '), failed > 0 ? 'error' : 'success');
-  }, [uploadBook, uploadBooks, showToast]);
+  }, [uploadBook, uploadBooks, showToast, t]);
 
   const handleDragEnter = useCallback((e: DragEvent) => {
     e.preventDefault();
@@ -164,47 +166,47 @@ export default function AllBooksPage() {
     const pdfFiles = allFiles.filter(f => f.type === 'application/pdf');
 
     if (pdfFiles.length === 0) {
-      showToast('Only PDF files are accepted', 'warning');
+      showToast(t('library.onlyPdfAccepted'), 'warning');
       return;
     }
 
     const nonPdfCount = allFiles.length - pdfFiles.length;
     if (nonPdfCount > 0) {
-      showToast(`${nonPdfCount} non-PDF file${nonPdfCount > 1 ? 's were' : ' was'} ignored`, 'warning');
+      showToast(t(nonPdfCount > 1 ? 'library.nonPdfIgnoredMany' : 'library.nonPdfIgnoredOne', { count: nonPdfCount }), 'warning');
     }
 
     handleUpload(pdfFiles);
-  }, [handleUpload, showToast]);
+  }, [handleUpload, showToast, t]);
 
   const handleDelete = useCallback(async (id: string) => {
     try {
       await deleteBook(id);
       removeBookFromList(id);
-      showToast('Book deleted successfully', 'success');
+      showToast(t('library.bookDeletedSuccess'), 'success');
     } catch {
-      showToast('Failed to delete book', 'error');
+      showToast(t('library.failedToDeleteBook'), 'error');
     }
-  }, [deleteBook, removeBookFromList, showToast]);
+  }, [deleteBook, removeBookFromList, showToast, t]);
 
   const handleStatusChange = useCallback(async (id: string, status: ReadingStatus) => {
     try {
       const updated = await updateBookStatus(id, status);
       if (updated) updateBookInList(updated);
-      showToast('Book status updated', 'success');
+      showToast(t('library.bookStatusUpdated'), 'success');
     } catch {
-      showToast('Failed to update book status', 'error');
+      showToast(t('library.failedToUpdateStatus'), 'error');
     }
-  }, [updateBookStatus, updateBookInList, showToast]);
+  }, [updateBookStatus, updateBookInList, showToast, t]);
 
   const handleRename = useCallback(async (id: string, title: string) => {
     try {
       const updated = await updateBook(id, { title });
       if (updated) updateBookInList(updated);
-      showToast('Book renamed successfully', 'success');
+      showToast(t('library.bookRenamedSuccess'), 'success');
     } catch {
-      showToast('Failed to rename book', 'error');
+      showToast(t('library.failedToRenameBook'), 'error');
     }
-  }, [updateBook, updateBookInList, showToast]);
+  }, [updateBook, updateBookInList, showToast, t]);
 
   if (loading) {
     return (
@@ -234,8 +236,8 @@ export default function AllBooksPage() {
         <div className="fixed inset-0 z-50 bg-blue-500/10 backdrop-blur-sm flex items-center justify-center pointer-events-none">
           <div className="border-4 border-dashed border-blue-500 rounded-2xl p-12 bg-white/80 dark:bg-gray-800/80 text-center">
             <Upload className="w-12 h-12 text-blue-500 mx-auto mb-3" />
-            <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">Drop PDFs here</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Upload one or multiple PDF files</p>
+            <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">{t('library.dropPdfsHere')}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('library.uploadPdfFiles')}</p>
           </div>
         </div>
       )}
@@ -246,7 +248,7 @@ export default function AllBooksPage() {
             <Link
               href="/"
               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-              title="Back to Home"
+              title={t('library.backToHome')}
             >
               <ArrowLeft className="w-6 h-6 text-gray-600 dark:text-gray-300" />
             </Link>
@@ -254,10 +256,10 @@ export default function AllBooksPage() {
               <Library className="w-7 h-7 sm:w-8 sm:h-8" style={{ color: 'var(--icon-color-secondary)' }} />
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  All Books
+                  {t('library.allBooks')}
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                  {stats.total} books • <span className="text-blue-500 dark:text-blue-400">{stats.reading} reading</span> • <span className="text-green-500 dark:text-green-400">{stats.finished} finished</span>
+                  {t('library.booksStats', { total: stats.total })} • <span className="text-blue-500 dark:text-blue-400">{t('library.reading', { count: stats.reading })}</span> • <span className="text-green-500 dark:text-green-400">{t('library.finished', { count: stats.finished })}</span>
                 </p>
               </div>
             </div>
@@ -265,7 +267,7 @@ export default function AllBooksPage() {
 
           <div className="flex flex-col items-end gap-2">
             <UploadButton onUpload={handleUpload} isLoading={uploading} />
-            <p className="text-xs text-gray-500 dark:text-gray-300">or drag & drop PDFs anywhere</p>
+            <p className="text-xs text-gray-500 dark:text-gray-300">{t('library.dragDropHint')}</p>
           </div>
         </div>
 
@@ -288,7 +290,7 @@ export default function AllBooksPage() {
               onClick={() => refetch()}
               className="mt-2 text-sm text-red-600 dark:text-red-300 underline hover:no-underline"
             >
-              Try again
+              {t('common.tryAgain')}
             </button>
           </div>
         )}
@@ -298,12 +300,12 @@ export default function AllBooksPage() {
           <div className="text-center py-16">
             <Library className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              {totalElements === 0 && !debouncedSearch && !statusFilter ? 'No books yet' : 'No books found'}
+              {totalElements === 0 && !debouncedSearch && !statusFilter ? t('library.noBooksYet') : t('library.noBooksFound')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               {totalElements === 0 && !debouncedSearch && !statusFilter
-                ? 'Upload your first PDF to get started'
-                : 'Try adjusting your search or filters'}
+                ? t('library.uploadFirstPdf')
+                : t('library.adjustSearchOrFilters')}
             </p>
             {totalElements === 0 && !debouncedSearch && !statusFilter && (
               <UploadButton onUpload={handleUpload} isLoading={uploading} />
@@ -321,7 +323,7 @@ export default function AllBooksPage() {
             <div ref={sentinelRef} className="h-4" />
             {!hasMore && books.length > 0 && (
               <p className="text-center text-sm text-gray-500 py-6">
-                — You&apos;ve reached the end —
+                — {t('library.reachedTheEnd')} —
               </p>
             )}
           </>

@@ -7,6 +7,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { Note, NoteColor } from '@/types';
 import { formatDistanceToNow } from '@/utils/date';
+import { useLanguage } from '@/i18n';
 
 interface NoteCardProps {
   note: Note;
@@ -16,6 +17,7 @@ interface NoteCardProps {
 }
 
 export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps) {
+  const { t } = useLanguage();
   const [showMenu, setShowMenu] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -45,10 +47,10 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
   };
 
   const colorLabels = {
-    [NoteColor.IDEA]: 'Idea',
-    [NoteColor.QUESTION]: 'Question',
-    [NoteColor.SUMMARY]: 'Summary',
-    [NoteColor.QUOTE]: 'Quote',
+    [NoteColor.IDEA]: t('notes.idea'),
+    [NoteColor.QUESTION]: t('notes.question'),
+    [NoteColor.SUMMARY]: t('notes.summary'),
+    [NoteColor.QUOTE]: t('notes.quote'),
   };
 
   const labelStyles = {
@@ -73,7 +75,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-            Page {note.pageNumber}
+            {t('notes.page', { number: note.pageNumber })}
           </span>
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${labelStyles[note.color]}`}>
             {colorLabels[note.color]}
@@ -81,7 +83,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
           <button
             onClick={() => onTogglePin(note.id, !note.pinned)}
             className="p-1.5 sm:p-0.5 rounded hover:bg-white/50 dark:hover:bg-black/20 transition-colors"
-            title={note.pinned ? 'Unpin note' : 'Pin note'}
+            title={note.pinned ? t('notes.unpinNote') : t('notes.pinNote')}
           >
             <Pin
               className="w-3 h-3 text-gray-600 dark:text-gray-400"
@@ -108,7 +110,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
               className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
             >
               <Pin className="w-4 h-4" />
-              {note.pinned ? 'Unpin' : 'Pin'}
+              {note.pinned ? t('notes.unpin') : t('notes.pin')}
             </button>
             <button
               onClick={() => {
@@ -118,7 +120,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
               className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
             >
               <Edit2 className="w-4 h-4" />
-              Edit
+              {t('common.edit')}
             </button>
             <button
               onClick={() => {
@@ -128,7 +130,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
               className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
             >
               <Trash2 className="w-4 h-4" />
-              Delete
+              {t('common.delete')}
             </button>
           </div>
         )}
@@ -187,7 +189,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
             onClick={() => setIsExpanded(!isExpanded)}
             className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1"
           >
-            {isExpanded ? 'Show less' : 'Show more'}
+            {isExpanded ? t('notes.showLess') : t('notes.showMore')}
           </button>
         )}
       </div>
@@ -195,7 +197,7 @@ export function NoteCard({ note, onEdit, onDelete, onTogglePin }: NoteCardProps)
       {/* Footer */}
       <div className="text-xs text-gray-500 dark:text-gray-400">
         {formatDistanceToNow(note.createdAt)}
-        {Math.abs(new Date(note.updatedAt).getTime() - new Date(note.createdAt).getTime()) > 1000 && ' (edited)'}
+        {Math.abs(new Date(note.updatedAt).getTime() - new Date(note.createdAt).getTime()) > 1000 && ` ${t('notes.edited')}`}
       </div>
     </div>
   );

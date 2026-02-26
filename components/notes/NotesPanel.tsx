@@ -7,6 +7,7 @@ import { NoteCard } from './NoteCard';
 import { NoteEditor } from './NoteEditor';
 import { Button } from '../common/Button';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { useLanguage } from '@/i18n';
 
 interface NotesPanelProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function NotesPanel({
   onDeleteNote,
   onExportNotes,
 }: NotesPanelProps) {
+  const { t } = useLanguage();
   const [showEditor, setShowEditor] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -79,7 +81,7 @@ export function NotesPanel({
           <div className="flex items-center gap-2">
             <StickyNote className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Notes ({notes.length})
+              {t('notes.notesCount', { count: notes.length })}
             </h2>
           </div>
           <button
@@ -94,7 +96,7 @@ export function NotesPanel({
         <div className="flex items-center justify-between gap-2 p-4 border-b border-gray-200 dark:border-gray-700">
           <Button size="sm" onClick={() => setShowEditor(true)}>
             <Plus className="w-4 h-4 mr-1" />
-            Add Note
+            {t('notes.addNote')}
           </Button>
 
           <div className="flex gap-2">
@@ -102,7 +104,7 @@ export function NotesPanel({
               onClick={() => setSortAscending(!sortAscending)}
               disabled={notes.length === 0}
               className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
-              title={sortAscending ? 'Sort: Page 1 → Last. Click to reverse' : 'Sort: Last → Page 1. Click to reverse'}
+              title={sortAscending ? t('notes.sortAscending') : t('notes.sortDescending')}
             >
               <ArrowUpDown className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -113,10 +115,10 @@ export function NotesPanel({
               onClick={onExportNotes}
               disabled={notes.length === 0}
               className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:pointer-events-none"
-              title="Download notes as text file"
+              title={t('notes.downloadNotes')}
             >
               <Download className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Export</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('notes.export')}</span>
             </button>
           </div>
         </div>
@@ -127,14 +129,14 @@ export function NotesPanel({
             <div className="text-center py-12">
               <StickyNote className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-500 dark:text-gray-400">
-                No notes yet for this book
+                {t('notes.noNotesYet')}
               </p>
               <Button
                 size="sm"
                 onClick={() => setShowEditor(true)}
                 className="mt-4"
               >
-                Create First Note
+                {t('notes.createFirstNote')}
               </Button>
             </div>
           ) : (
@@ -168,9 +170,9 @@ export function NotesPanel({
         isOpen={!!deleteConfirm}
         onClose={() => setDeleteConfirm(null)}
         onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
-        title="Delete Note"
-        message="Are you sure you want to delete this note? This action cannot be undone."
-        confirmText="Delete"
+        title={t('notes.deleteNote')}
+        message={t('notes.deleteNoteMessage')}
+        confirmText={t('common.delete')}
         variant="danger"
       />
     </>

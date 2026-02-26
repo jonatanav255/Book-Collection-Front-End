@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { CheckCircle, XCircle, Info, AlertTriangle, X } from 'lucide-react';
+import { useLanguage } from '@/i18n';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -60,6 +61,8 @@ interface ToastItemProps {
 }
 
 function ToastItem({ toast, onDismiss }: ToastItemProps) {
+  const { t } = useLanguage();
+
   const icons = {
     success: <CheckCircle className="w-5 h-5" />,
     error: <XCircle className="w-5 h-5" />,
@@ -84,7 +87,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
       <p className="flex-1 text-sm font-medium">{toast.message}</p>
       <button
         onClick={() => onDismiss(toast.id)}
-        aria-label="Dismiss"
+        aria-label={t('common.dismiss')}
         className="flex-shrink-0 opacity-70 hover:opacity-100 transition-opacity"
       >
         <X className="w-4 h-4" />

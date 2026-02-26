@@ -4,6 +4,7 @@ import React, { useRef } from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '../common/Button';
 import { useToast } from '../common/Toast';
+import { useLanguage } from '@/i18n';
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -16,6 +17,7 @@ interface UploadButtonProps {
 export function UploadButton({ onUpload, isLoading = false }: UploadButtonProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { showToast } = useToast();
+  const { t } = useLanguage();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const allFiles = Array.from(e.target.files || []);
@@ -25,13 +27,13 @@ export function UploadButton({ onUpload, isLoading = false }: UploadButtonProps)
     const nonPdfCount = allFiles.length - pdfFiles.length;
 
     if (nonPdfCount > 0) {
-      alert(`${nonPdfCount} non-PDF file${nonPdfCount > 1 ? 's were' : ' was'} ignored.`);
+      alert(t(nonPdfCount > 1 ? 'library.nonPdfIgnoredMany' : 'library.nonPdfIgnoredOne', { count: nonPdfCount }));
     }
 
     if (pdfFiles.length === 0) return;
 
     if (pdfFiles.length > 20) {
-      alert('You can upload a maximum of 20 PDF files at once.');
+      alert(t('library.maxFilesLimit'));
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -39,7 +41,7 @@ export function UploadButton({ onUpload, isLoading = false }: UploadButtonProps)
     const oversized = pdfFiles.filter((f) => f.size > MAX_FILE_SIZE_BYTES);
     if (oversized.length > 0) {
       showToast(
-        `${oversized.length} file${oversized.length > 1 ? 's exceed' : ' exceeds'} the ${MAX_FILE_SIZE_MB}MB limit and will be skipped.`,
+        t(oversized.length > 1 ? 'library.fileSizeExceededMany' : 'library.fileSizeExceededOne', { count: oversized.length, size: MAX_FILE_SIZE_MB }),
         'warning'
       );
       const validFiles = pdfFiles.filter((f) => f.size <= MAX_FILE_SIZE_BYTES);
@@ -74,7 +76,7 @@ export function UploadButton({ onUpload, isLoading = false }: UploadButtonProps)
         className="flex items-center gap-2"
       >
         <Upload className="w-5 h-5" />
-        Upload PDF
+        {t('library.uploadPdf')}
       </Button>
     </>
   );

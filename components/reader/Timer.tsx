@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Timer as TimerIcon, Play, Pause, RotateCcw, X, Settings } from 'lucide-react';
+import { useLanguage } from '@/i18n';
 
 /**
  * Timer mode types
@@ -47,6 +48,8 @@ interface PomodoroSettings {
  * - Session tracking for Pomodoro
  */
 export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChange }: TimerProps) {
+  const { t } = useLanguage();
+
   // Timer mode and running state
   const [mode, setMode] = useState<TimerMode>('countdown');
   const [isRunning, setIsRunning] = useState(false);
@@ -131,8 +134,8 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
     setIsRunning(false);
     playSound();
     if (Notification.permission === 'granted') {
-      new Notification('Timer Complete!', {
-        body: 'Your reading timer has finished.',
+      new Notification(t('timer.timerComplete'), {
+        body: t('timer.timerCompleteBody'),
         icon: '/icon.png',
       });
     }
@@ -164,16 +167,16 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
         setPomodoroPhase('longBreak');
         setPomodoroSeconds(pomodoroSettings.longBreakMinutes * 60);
         if (Notification.permission === 'granted') {
-          new Notification('Time for a Long Break!', {
-            body: `Take a ${pomodoroSettings.longBreakMinutes} minute break.`,
+          new Notification(t('timer.timeForLongBreak'), {
+            body: t('timer.longBreakBody', { minutes: pomodoroSettings.longBreakMinutes }),
           });
         }
       } else {
         setPomodoroPhase('shortBreak');
         setPomodoroSeconds(pomodoroSettings.shortBreakMinutes * 60);
         if (Notification.permission === 'granted') {
-          new Notification('Time for a Break!', {
-            body: `Take a ${pomodoroSettings.shortBreakMinutes} minute break.`,
+          new Notification(t('timer.timeForBreak'), {
+            body: t('timer.shortBreakBody', { minutes: pomodoroSettings.shortBreakMinutes }),
           });
         }
       }
@@ -181,8 +184,8 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
       setPomodoroPhase('work');
       setPomodoroSeconds(pomodoroSettings.workMinutes * 60);
       if (Notification.permission === 'granted') {
-        new Notification('Break Over!', {
-          body: `Start your ${pomodoroSettings.workMinutes} minute work session.`,
+        new Notification(t('timer.breakOver'), {
+          body: t('timer.breakOverBody', { minutes: pomodoroSettings.workMinutes }),
         });
       }
     }
@@ -317,14 +320,14 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
           <button
             onClick={onOpen}
             className="text-sm font-mono font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            title="Open timer"
+            title={t('timer.openTimer')}
           >
             {getCurrentTime()}
           </button>
           <button
             onClick={() => setIsRunning(false)}
             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-            title="Pause"
+            title={t('timer.pauseTimer')}
           >
             <Pause className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </button>
@@ -350,7 +353,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <TimerIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Reading Timer</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('timer.readingTimer')}</h2>
           </div>
           <button
             onClick={onClose}
@@ -371,7 +374,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             } ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Countdown
+            {t('timer.countdown')}
           </button>
           <button
             onClick={() => setMode('countup')}
@@ -382,7 +385,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             } ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Count Up
+            {t('timer.countUp')}
           </button>
           <button
             onClick={() => setMode('pomodoro')}
@@ -393,7 +396,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             } ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Pomodoro
+            {t('timer.pomodoro')}
           </button>
         </div>
 
@@ -405,7 +408,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
                 pomodoroPhase === 'work' ? 'bg-red-500' : 'bg-green-500'
               }`} />
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {pomodoroPhase === 'work' ? 'Work Session' : pomodoroPhase === 'shortBreak' ? 'Short Break' : 'Long Break'}
+                {pomodoroPhase === 'work' ? t('timer.workSession') : pomodoroPhase === 'shortBreak' ? t('timer.shortBreak') : t('timer.longBreak')}
               </span>
               <span className="text-xs text-gray-600 dark:text-gray-400">
                 ({pomodoroSessionCount % pomodoroSettings.sessionsUntilLongBreak}/{pomodoroSettings.sessionsUntilLongBreak})
@@ -427,7 +430,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
         {mode === 'countdown' && !isRunning && (
           <div className="mb-4 flex items-center justify-center gap-3">
             <div>
-              <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Minutes</label>
+              <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">{t('timer.minutes')}</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -452,7 +455,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
               />
             </div>
             <div>
-              <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Seconds</label>
+              <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">{t('timer.seconds')}</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -483,17 +486,17 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
         {mode === 'pomodoro' && showSettings && (
           <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Pomodoro Settings</h3>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('timer.pomodoroSettings')}</h3>
               <button
                 onClick={() => setShowSettings(false)}
                 className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
               >
-                Done
+                {t('timer.done')}
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Work (min)</label>
+                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">{t('timer.workMin')}</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -519,7 +522,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Short break (min)</label>
+                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">{t('timer.shortBreakMin')}</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -538,7 +541,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Long break (min)</label>
+                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">{t('timer.longBreakMin')}</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -557,7 +560,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">Sessions until long break</label>
+                <label className="text-xs text-gray-600 dark:text-gray-400 block mb-1">{t('timer.sessionsUntilLongBreak')}</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -587,7 +590,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
               className="flex items-center gap-1 mx-auto text-xs text-blue-600 dark:text-blue-400 hover:underline"
             >
               <Settings className="w-3 h-3" />
-              Customize Pomodoro
+              {t('timer.customizePomodoro')}
             </button>
           </div>
         )}
@@ -601,12 +604,12 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
             {isRunning ? (
               <>
                 <Pause className="w-5 h-5" />
-                Pause
+                {t('timer.pauseTimer')}
               </>
             ) : (
               <>
                 <Play className="w-5 h-5" />
-                Start
+                {t('timer.start')}
               </>
             )}
           </button>
@@ -615,7 +618,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
             className="flex items-center gap-2 px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg font-medium transition-colors"
           >
             <RotateCcw className="w-5 h-5" />
-            Reset
+            {t('timer.reset')}
           </button>
         </div>
 
@@ -625,7 +628,7 @@ export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChang
             onClick={requestNotificationPermission}
             className="w-full text-sm text-blue-600 dark:text-blue-400 hover:underline"
           >
-            Enable notifications for timer alerts
+            {t('timer.enableNotifications')}
           </button>
         )}
         </div>

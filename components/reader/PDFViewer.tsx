@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import { TextLayer } from 'pdfjs-dist';
 import { Loading } from '../common/Loading';
+import { useLanguage } from '@/i18n';
 
 /**
  * Configure PDF.js worker
@@ -46,6 +47,8 @@ export function PDFViewer({
   onPageChange,
   onTotalPagesLoad,
 }: PDFViewerProps) {
+  const { t } = useLanguage();
+
   // Refs for DOM elements
   const canvasRef = useRef<HTMLCanvasElement>(null);  // Canvas for PDF rendering
   const containerRef = useRef<HTMLDivElement>(null);  // PDF container
@@ -200,7 +203,7 @@ export function PDFViewer({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loading size="lg" text="Loading PDF..." />
+        <Loading size="lg" text={t('reader.loadingPdf')} />
       </div>
     );
   }
@@ -209,7 +212,7 @@ export function PDFViewer({
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-red-600 dark:text-red-400 mb-2">Failed to load PDF</p>
+          <p className="text-red-600 dark:text-red-400 mb-2">{t('errors.failedToLoadPdf')}</p>
           <p className="text-sm text-gray-600 dark:text-gray-400">{error}</p>
         </div>
       </div>

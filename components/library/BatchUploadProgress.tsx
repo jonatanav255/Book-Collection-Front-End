@@ -5,6 +5,7 @@ import { CheckCircle, MinusCircle, XCircle, Loader2 } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import type { BatchUploadFileResult } from '@/types';
+import { useLanguage } from '@/i18n';
 
 interface BatchUploadProgressProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function BatchUploadProgress({
   currentIndex,
   isComplete,
 }: BatchUploadProgressProps) {
+  const { t } = useLanguage();
   const total = results.length;
   const uploaded = results.filter((r) => r.status === 'success').length;
   const skipped = results.filter((r) => r.status === 'skipped').length;
@@ -36,15 +38,19 @@ export function BatchUploadProgress({
   const done = uploaded + skipped + failed;
   const progressPercent = total > 0 ? (done / total) * 100 : 0;
 
+  const summaryParts: string[] = [t('upload.uploadedSummary', { uploaded })];
+  if (skipped > 0) summaryParts.push(t('upload.skippedSummary', { skipped }));
+  if (failed > 0) summaryParts.push(t('upload.failedSummary', { failed }));
+
   return (
-    <Modal isOpen={isOpen} onClose={isComplete ? onClose : () => {}} title="Uploading Books" size="lg">
+    <Modal isOpen={isOpen} onClose={isComplete ? onClose : () => {}} title={t('upload.uploadingBooks')} size="lg">
       {/* Progress bar */}
       <div className="mb-6">
         <div className="flex justify-between text-base text-gray-600 dark:text-gray-400 mb-2">
           <span>
             {isComplete
-              ? 'Upload complete'
-              : `Uploading ${Math.min(currentIndex + 1, total)} of ${total}...`}
+              ? t('upload.uploadComplete')
+              : t('upload.uploadingProgress', { current: Math.min(currentIndex + 1, total), total })}
           </span>
           <span>{Math.round(progressPercent)}%</span>
         </div>
@@ -66,10 +72,10 @@ export function BatchUploadProgress({
                 {result.file.name}
               </span>
               {result.status === 'skipped' && (
-                <span className="text-amber-500 dark:text-amber-400 text-sm">Duplicate — skipped</span>
+                <span className="text-amber-500 dark:text-amber-400 text-sm">{t('upload.duplicateSkipped')}</span>
               )}
               {result.status === 'failed' && (
-                <span className="text-red-500 dark:text-red-400 text-sm">Upload failed</span>
+                <span className="text-red-500 dark:text-red-400 text-sm">{t('upload.uploadFailed')}</span>
               )}
             </div>
           </li>
@@ -80,9 +86,9 @@ export function BatchUploadProgress({
       {isComplete && (
         <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
           <p className="text-base text-gray-700 dark:text-gray-300 mb-4">
-            {uploaded} uploaded{skipped > 0 && `, ${skipped} skipped`}{failed > 0 && `, ${failed} failed`}
+            {summaryParts.join(', ')}
           </p>
-          <Button onClick={onClose} className="w-full">Close</Button>
+          <Button onClick={onClose} className="w-full">{t('upload.closeBatch')}</Button>
         </div>
       )}
     </Modal>

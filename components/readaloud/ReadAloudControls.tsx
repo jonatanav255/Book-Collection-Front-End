@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Play, Pause, Square, Volume2, Loader2, CheckCircle2 } from 'lucide-react';
+import { useLanguage } from '@/i18n';
 
 interface ReadAloudControlsProps {
   isPlaying: boolean;
@@ -22,12 +23,14 @@ export function ReadAloudControls({
   onTogglePlayPause,
   onStop,
 }: ReadAloudControlsProps) {
+  const { t } = useLanguage();
+
   const getStatusText = () => {
-    if (error) return 'Error';
-    if (isLoading) return 'Loading audio...';
-    if (isPlaying && !isPaused) return 'Playing';
-    if (isPaused) return 'Paused';
-    return 'Ready';
+    if (error) return t('audio.error');
+    if (isLoading) return t('audio.loadingAudio');
+    if (isPlaying && !isPaused) return t('audio.playing');
+    if (isPaused) return t('audio.paused');
+    return t('audio.ready');
   };
 
   const getStatusColor = () => {
@@ -44,7 +47,7 @@ export function ReadAloudControls({
         onClick={onTogglePlayPause}
         disabled={isLoading}
         className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white transition-colors"
-        title={!isPlaying ? 'Play' : isPaused ? 'Resume' : 'Pause'}
+        title={!isPlaying ? t('audio.play') : isPaused ? t('audio.resume') : t('audio.pause')}
       >
         {isLoading ? (
           <Loader2 className="w-5 h-5 animate-spin" />
@@ -60,7 +63,7 @@ export function ReadAloudControls({
         <button
           onClick={onStop}
           className="p-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
-          title="Stop"
+          title={t('audio.stop')}
         >
           <Square className="w-5 h-5" fill="currentColor" />
         </button>
@@ -78,7 +81,7 @@ export function ReadAloudControls({
       {isCached && !isLoading && !error && (
         <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded text-xs text-green-700 dark:text-green-300">
           <CheckCircle2 className="w-3 h-3" />
-          <span>Cached</span>
+          <span>{t('audio.cached')}</span>
         </div>
       )}
 
@@ -93,7 +96,7 @@ export function ReadAloudControls({
       {!error && !isLoading && (
         <div className="ml-auto hidden sm:block">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Google Cloud TTS • Auto-advance enabled
+            {t('audio.ttsInfo')}
           </p>
         </div>
       )}

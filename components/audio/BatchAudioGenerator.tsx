@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { audioApi } from '@/services/api';
+import { useLanguage } from '@/i18n';
 
 interface BatchAudioGeneratorProps {
   bookId: string;
@@ -12,6 +13,7 @@ interface BatchAudioGeneratorProps {
 type GenerationStatus = 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 
 export function BatchAudioGenerator({ bookId, onComplete, onError }: BatchAudioGeneratorProps) {
+  const { t } = useLanguage();
   const [status, setStatus] = useState<GenerationStatus>('IDLE');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -79,13 +81,13 @@ export function BatchAudioGenerator({ bookId, onComplete, onError }: BatchAudioG
 
       // Validate inputs
       if (start !== undefined && (isNaN(start) || start < 1)) {
-        throw new Error('Start page must be a positive number');
+        throw new Error(t('audio.startPageError'));
       }
       if (end !== undefined && (isNaN(end) || end < 1)) {
-        throw new Error('End page must be a positive number');
+        throw new Error(t('audio.endPageError'));
       }
       if (start !== undefined && end !== undefined && start > end) {
-        throw new Error('Start page must be less than or equal to end page');
+        throw new Error(t('audio.startEndPageError'));
       }
 
       await audioApi.startBatchGeneration(bookId, start, end);
@@ -116,7 +118,7 @@ export function BatchAudioGenerator({ bookId, onComplete, onError }: BatchAudioG
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Batch Audio Generation
+          {t('audio.batchAudioGeneration')}
         </h3>
         <span className={`text-sm font-medium px-3 py-1 rounded-full ${
           status === 'IDLE' ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300' :
@@ -126,14 +128,14 @@ export function BatchAudioGenerator({ bookId, onComplete, onError }: BatchAudioG
           status === 'FAILED' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
           'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
         }`}>
-          {isCancelling ? 'CANCELLING...' : status}
+          {isCancelling ? t('audio.cancelling') : status}
         </span>
       </div>
 
       {status === 'RUNNING' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-            <span>Page {currentPage} / {totalPages}</span>
+            <span>{t('audio.pageProgress', { current: currentPage, total: totalPages })}</span>
             <span>{progressPercentage.toFixed(1)}%</span>
           </div>
 
@@ -149,7 +151,7 @@ export function BatchAudioGenerator({ bookId, onComplete, onError }: BatchAudioG
 
           {isCancelling && (
             <p className="text-sm text-yellow-700 dark:text-yellow-400 font-medium">
-              Stopping generation... This may take a moment.
+              {t('audio.stoppingGeneration')}
             </p>
           )}
         </div>
@@ -160,7 +162,7 @@ export function BatchAudioGenerator({ bookId, onComplete, onError }: BatchAudioG
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="startPage" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Start Page (optional)
+              {t('audio.startPage')}
             </label>
             <input
               id="startPage"
@@ -174,7 +176,7 @@ export function BatchAudioGenerator({ bookId, onComplete, onError }: BatchAudioG
           </div>
           <div>
             <label htmlFor="endPage" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              End Page (optional)
+              {t('audio.endPage')}
             </label>
             <input
               id="endPage"
@@ -202,7 +204,7 @@ export function BatchAudioGenerator({ bookId, onComplete, onError }: BatchAudioG
             disabled={isStarting}
             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isStarting ? 'Starting...' : status === 'IDLE' ? 'Start Generation' : 'Restart Generation'}
+            {isStarting ? t('audio.starting') : status === 'IDLE' ? t('audio.startGeneration') : t('audio.restartGeneration')}
           </button>
         ) : (
           <button
@@ -210,13 +212,13 @@ export function BatchAudioGenerator({ bookId, onComplete, onError }: BatchAudioG
             disabled={isCancelling}
             className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isCancelling ? 'Cancelling...' : 'Cancel'}
+            {isCancelling ? t('audio.cancelling') : t('common.cancel')}
           </button>
         )}
       </div>
 
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        Generate audio for all pages in this book. Pages with existing cached audio will be skipped.
+        {t('audio.batchAudioDescription')}
       </p>
     </div>
   );

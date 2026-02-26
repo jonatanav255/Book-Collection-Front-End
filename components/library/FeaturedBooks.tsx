@@ -10,6 +10,7 @@ import { useBookCover } from '@/hooks/useBookCover';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/hooks/queryKeys';
 import { Loading } from '../common/Loading';
+import { useLanguage } from '@/i18n';
 
 interface FeaturedBooksProps {
   limit?: number;
@@ -17,6 +18,7 @@ interface FeaturedBooksProps {
 
 export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
   const [navigating, setNavigating] = useState(false);
+  const { t } = useLanguage();
   // Cached for 5 min — featured books don't change often
   // refetchOnWindowFocus deduplicates tab switches (one fetch vs previous 3)
   const { data: books = [], isLoading: loading, error } = useQuery({
@@ -29,7 +31,7 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loading size="lg" text="Loading featured books..." />
+        <Loading size="lg" text={t('library.loadingFeaturedBooks')} />
       </div>
     );
   }
@@ -45,7 +47,7 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
   if (books.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600 dark:text-gray-400">No books to display yet. Upload some PDFs to get started!</p>
+        <p className="text-gray-600 dark:text-gray-400">{t('library.noFeaturedBooks')}</p>
       </div>
     );
   }
@@ -55,8 +57,8 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Continue Reading</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Pick up where you left off</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{t('library.continueReading')}</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('library.pickUpWhereLeftOff')}</p>
         </div>
         <Link
           href="/library"
@@ -66,11 +68,11 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
           {navigating ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Loading...
+              {t('common.loading')}
             </>
           ) : (
             <>
-              All Books
+              {t('library.allBooks')}
               <ChevronRight className="w-4 h-4" />
             </>
           )}
@@ -90,6 +92,7 @@ export function FeaturedBooks({ limit = 6 }: FeaturedBooksProps) {
 function FeaturedBookCard({ book }: { book: Book }) {
   const [isOpening, setIsOpening] = useState(false);
   const { imageUrl, imageLoaded, handleLoad, handleError } = useBookCover(book.id, book.coverUrl);
+  const { t } = useLanguage();
   const progress = book.status === 'FINISHED'
     ? 100
     : book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
@@ -132,7 +135,7 @@ function FeaturedBookCard({ book }: { book: Book }) {
                 />
               </div>
               <p className="text-white text-xs mt-1 font-medium">
-                {book.status === 'FINISHED' ? 'Complete' : `${progress}%`}
+                {book.status === 'FINISHED' ? t('library.complete') : `${progress}%`}
               </p>
             </div>
           )}

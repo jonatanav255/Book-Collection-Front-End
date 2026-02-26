@@ -4,13 +4,15 @@ import React from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { ThemePreset } from '@/types';
+import { useLanguage } from '@/i18n';
 
 export function ThemeSelector() {
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
 
   const themes = [
-    { value: ThemePreset.LIGHT, label: 'Light', icon: Sun, description: 'Bright theme' },
-    { value: ThemePreset.DARK, label: 'Dark', icon: Moon, description: 'Dark theme' },
+    { value: ThemePreset.LIGHT, label: t('settings.light'), icon: Sun, description: t('settings.brightTheme') },
+    { value: ThemePreset.DARK, label: t('settings.dark'), icon: Moon, description: t('settings.darkTheme') },
   ];
 
   return (
@@ -18,7 +20,7 @@ export function ThemeSelector() {
       {/* Theme Selection */}
       <div>
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-          Theme
+          {t('settings.theme')}
         </h3>
         <div className="grid grid-cols-2 gap-2">
           {themes.map((themeOption) => {

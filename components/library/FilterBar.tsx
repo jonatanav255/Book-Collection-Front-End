@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ReadingStatus } from '@/types';
 import { ChevronDown } from 'lucide-react';
+import { useLanguage } from '@/i18n';
 
 interface FilterBarProps {
   sortBy: string;
@@ -76,46 +77,48 @@ function CustomSelect({ value, onChange, options, label }: CustomSelectProps) {
   );
 }
 
-const sortOptions = [
-  { value: 'dateAdded', label: 'Date Added' },
-  { value: 'title', label: 'Title' },
-  { value: 'lastRead', label: 'Last Read' },
-  { value: 'progress', label: 'Progress' },
-];
-
-const statusOptions = [
-  { value: '', label: 'All Books' },
-  { value: ReadingStatus.UNREAD, label: 'Unread' },
-  { value: ReadingStatus.READING, label: 'Reading' },
-  { value: ReadingStatus.FINISHED, label: 'Finished' },
-];
-
 export const FilterBar = React.memo(function FilterBar({ sortBy, status, onSortChange, onStatusChange }: FilterBarProps) {
+  const { t } = useLanguage();
+
+  const sortOptions = [
+    { value: 'dateAdded', label: t('library.dateAdded') },
+    { value: 'title', label: t('library.title') },
+    { value: 'lastRead', label: t('library.lastRead') },
+    { value: 'progress', label: t('library.progress') },
+  ];
+
+  const statusOptions = [
+    { value: '', label: t('library.allBooksFilter') },
+    { value: ReadingStatus.UNREAD, label: t('library.unread') },
+    { value: ReadingStatus.READING, label: t('library.readingStatus') },
+    { value: ReadingStatus.FINISHED, label: t('library.finishedStatus') },
+  ];
+
   return (
     <div className="flex flex-wrap gap-2 sm:gap-4">
       {/* Sort By */}
       <div className="flex items-center gap-2">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
-          Sort by:
+          {t('library.sortBy')}:
         </label>
         <CustomSelect
           value={sortBy}
           onChange={onSortChange}
           options={sortOptions}
-          label="Sort by"
+          label={t('library.sortBy')}
         />
       </div>
 
       {/* Filter by Status */}
       <div className="flex items-center gap-2">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
-          Status:
+          {t('library.status')}:
         </label>
         <CustomSelect
           value={status}
           onChange={onStatusChange as (value: string) => void}
           options={statusOptions}
-          label="Status"
+          label={t('library.status')}
         />
       </div>
     </div>
