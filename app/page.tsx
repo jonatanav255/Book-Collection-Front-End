@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Library, Download } from 'lucide-react';
 import { collectionApi } from '@/services/api';
 import { useToast } from '@/components/common/Toast';
+import { Button } from '@/components/common/Button';
 import { UploadButton } from '@/components/library/UploadButton';
 import { FeaturedBooks } from '@/components/library/FeaturedBooks';
 import { ReadingStats } from '@/components/library/ReadingStats';
@@ -75,8 +76,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
+          <div className="flex items-center gap-3">
+            <Button
+              variant="primary"
               onClick={async () => {
                 if (downloading) return;
                 try {
@@ -89,12 +91,12 @@ export default function HomePage() {
                   setDownloading(false);
                 }
               }}
-              disabled={downloading}
-              className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Download API collection for Insomnia"
+              isLoading={downloading}
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-emerald-500/25"
             >
-              <Download className={`w-5 h-5 ${downloading ? 'animate-pulse' : ''}`} />
-            </button>
+              <Download className="w-5 h-5" />
+              API Collection
+            </Button>
             <UploadButton onUpload={handleUpload} isLoading={uploading} />
           </div>
         </div>
