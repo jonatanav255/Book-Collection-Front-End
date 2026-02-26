@@ -227,6 +227,47 @@ describe('useAudioPlayer', () => {
     expect(result.current.isPlaying).toBe(false);
   });
 
+  // ── recheckCache (batch generation fix)
+  it('recheckCache updates isCached after batch audio generation', async () => {
+    const { result } = renderHook(() =>
+      useAudioPlayer({ bookId: 'book-1', currentPage: 1 })
+    );
+    await act(async () => {});
+
+    // Initially not cached
+    expect(result.current.isCached).toBe(false);
+
+    // Simulate batch generation completing — backend now has cached audio
+    vi.mocked(audioApi.checkAudioStatus).mockResolvedValue({
+      bookId: 'book-1',
+      pageNumber: 1,
+      cached: true,
+    });
+
+    // Call recheckCache (what onComplete triggers after batch gen)
+    await act(async () => {
+      await result.current.recheckCache();
+    });
+
+    // Green indicator should show immediately
+    expect(result.current.isCached).toBe(true);
+  });
+
+  it('recheckCache does nothing when enabled=false', async () => {
+    const { result } = renderHook(() =>
+      useAudioPlayer({ bookId: 'book-1', currentPage: 1, enabled: false })
+    );
+    await act(async () => {});
+
+    vi.mocked(audioApi.checkAudioStatus).mockClear();
+
+    await act(async () => {
+      await result.current.recheckCache();
+    });
+
+    expect(audioApi.checkAudioStatus).not.toHaveBeenCalled();
+  });
+
   // ── togglePlayPause
   it('togglePlayPause starts playback when not playing', async () => {
     const { result } = renderHook(() =>
