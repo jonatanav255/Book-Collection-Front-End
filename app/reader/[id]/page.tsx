@@ -66,6 +66,7 @@ export default function ReaderPage() {
     error: audioError,
     togglePlayPause,
     stop,
+    recheckCache,
     audioElement,
   } = useAudioPlayer({
     bookId,
@@ -299,7 +300,7 @@ export default function ReaderPage() {
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('settings.audioHeading')}</h3>
             <BatchAudioGenerator
               bookId={bookId}
-              onComplete={() => showToast(t('reader.batchGenerationCompleted'), 'success')}
+              onComplete={() => { recheckCache(); showToast(t('reader.batchGenerationCompleted'), 'success'); }}
               onError={(error) => showToast(error, 'error')}
             />
           </div>

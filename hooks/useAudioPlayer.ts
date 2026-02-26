@@ -217,6 +217,17 @@ export function useAudioPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
+  // Allow external callers to re-check cache status (e.g. after batch generation)
+  const recheckCache = useCallback(async () => {
+    if (!bookId || !enabled) return;
+    try {
+      const status = await audioApi.checkAudioStatus(bookId, currentPage);
+      setIsCached(status.cached);
+    } catch {
+      // Silently fail
+    }
+  }, [bookId, currentPage, enabled]);
+
   return {
     isPlaying,
     isPaused,
@@ -227,6 +238,7 @@ export function useAudioPlayer({
     pause,
     stop,
     togglePlayPause,
+    recheckCache,
     audioElement: audioRef.current, // Expose audio element for sync
   };
 }
