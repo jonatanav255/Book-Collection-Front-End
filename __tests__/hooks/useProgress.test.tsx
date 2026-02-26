@@ -12,6 +12,10 @@ vi.mock('@/services/api', () => ({
 
 import { progressApi } from '@/services/api';
 
+/**
+ * useProgress hook tests — reading progress with debounced updates
+ * Verifies fetching progress, debouncing, merging updates, and flushing on unmount
+ */
 describe('useProgress', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -22,6 +26,7 @@ describe('useProgress', () => {
     vi.useRealTimers();
   });
 
+  // ── Initial state
   it('sets loading=false and progress=null when bookId is null', async () => {
     const { result } = renderHook(() => useProgress(null));
 
@@ -55,6 +60,7 @@ describe('useProgress', () => {
     expect(result.current.loading).toBe(false);
   });
 
+  // ── Immediate updates (skip debounce)
   it('updateProgress immediate=true calls API right away', async () => {
     const mockProgress = { currentPage: 5, status: 'READING', progressPercentage: 10 };
     vi.mocked(progressApi.get).mockResolvedValue(mockProgress as any);
@@ -70,6 +76,7 @@ describe('useProgress', () => {
     expect(progressApi.update).toHaveBeenCalledWith('book-xyz', { currentPage: 20 });
   });
 
+  // ── Debounced updates (2s delay, merged)
   it('updateProgress immediate=false debounces the API call', async () => {
     const mockProgress = { currentPage: 5, status: 'READING', progressPercentage: 10 };
     vi.mocked(progressApi.get).mockResolvedValue(mockProgress as any);
@@ -127,6 +134,7 @@ describe('useProgress', () => {
     expect(progressApi.update).not.toHaveBeenCalled();
   });
 
+  // ── Cleanup on unmount
   it('flushes pending debounced update on unmount', async () => {
     const mockProgress = { currentPage: 1, status: 'READING', progressPercentage: 5 };
     vi.mocked(progressApi.get).mockResolvedValue(mockProgress as any);

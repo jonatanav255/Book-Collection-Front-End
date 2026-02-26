@@ -36,6 +36,7 @@ describe('useBooks', () => {
     queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   });
 
+  // ── Upload operations
   it('uploadBook calls booksApi.upload and returns result', async () => {
     const book = { id: '1', title: 'My Book' };
     vi.mocked(booksApi.upload).mockResolvedValue(book as any);
@@ -114,6 +115,7 @@ describe('useBooks', () => {
     expect(results[1].status).toBe('success');
   });
 
+  // ── Status updates (auto-adjust currentPage based on status)
   it('updateBookStatus sets currentPage=pageCount when status=FINISHED', async () => {
     const book = { id: 'b1', pageCount: 300, status: 'READING' };
     vi.mocked(booksApi.getById).mockResolvedValue(book as any);
@@ -143,6 +145,7 @@ describe('useBooks', () => {
     expect(booksApi.update).toHaveBeenCalledWith('b2', { status: 'UNREAD', currentPage: 0 });
   });
 
+  // ── Deletion
   it('deleteBook calls booksApi.delete', async () => {
     vi.mocked(booksApi.delete).mockResolvedValue(undefined as any);
 

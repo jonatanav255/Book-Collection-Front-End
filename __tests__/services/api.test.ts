@@ -90,6 +90,7 @@ describe('progressApi', () => {
   });
 });
 
+// ── Notes API (list, create, delete)
 describe('notesApi', () => {
   beforeEach(() => mockFetch.mockReset());
 
@@ -137,6 +138,7 @@ describe('notesApi', () => {
   });
 });
 
+// ── Preferences API (get, update user settings)
 describe('preferencesApi', () => {
   beforeEach(() => mockFetch.mockReset());
 

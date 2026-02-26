@@ -23,6 +23,9 @@ function renderTimer(props: Partial<React.ComponentProps<typeof Timer>> = {}) {
   );
 }
 
+/**
+ * Timer component tests — countdown/count-up modes with start/reset/pomodoro controls
+ */
 describe('Timer', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -32,6 +35,7 @@ describe('Timer', () => {
     vi.useRealTimers();
   });
 
+  // ── Visibility
   it('renders when isOpen=true', () => {
     renderTimer();
     expect(screen.getByText(/reading timer/i)).toBeInTheDocument();
@@ -42,6 +46,7 @@ describe('Timer', () => {
     expect(screen.queryByText(/reading timer/i)).not.toBeInTheDocument();
   });
 
+  // ── Default mode and switching
   it('shows countdown mode by default', () => {
     renderTimer();
     // Countdown starts at 25:00
@@ -58,6 +63,7 @@ describe('Timer', () => {
     expect(screen.getByText('0:00')).toBeInTheDocument();
   });
 
+  // ── UI controls
   it('renders multiple buttons including close', () => {
     const onClose = vi.fn();
     renderTimer({ onClose });
@@ -76,6 +82,7 @@ describe('Timer', () => {
     expect(screen.getByRole('button', { name: /reset/i })).toBeInTheDocument();
   });
 
+  // ── Display formatting and features
   it('displays time in MM:SS format', () => {
     renderTimer();
     // Default 25:00 is displayed — verify the MM:SS format pattern
