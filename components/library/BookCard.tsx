@@ -106,7 +106,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
         {selectionMode ? (
           coverContent
         ) : (
-          <Link href={`/reader/${book.id}`} onClick={() => setIsOpening(true)}>
+          <Link href={`/reader/${book.id}`} onClick={() => setIsOpening(true)} className={isOpening ? 'pointer-events-none' : ''}>
             {coverContent}
           </Link>
         )}
@@ -146,7 +146,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
               {book.title}
             </h3>
           ) : (
-            <Link href={`/reader/${book.id}`}>
+            <Link href={`/reader/${book.id}`} onClick={() => setIsOpening(true)} className={isOpening ? 'pointer-events-none' : ''}>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 mb-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors min-h-[48px]">
                 {book.title}
               </h3>

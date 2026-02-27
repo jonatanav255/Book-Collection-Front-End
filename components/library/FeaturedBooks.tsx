@@ -98,7 +98,7 @@ function FeaturedBookCard({ book }: { book: Book }) {
     : book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
 
   return (
-    <Link href={`/reader/${book.id}`} onClick={() => setIsOpening(true)}>
+    <Link href={`/reader/${book.id}`} onClick={() => setIsOpening(true)} className={isOpening ? 'pointer-events-none' : ''}>
       <div className="group cursor-pointer">
         {/* Book Cover */}
         <div className="aspect-[3/4] relative bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">

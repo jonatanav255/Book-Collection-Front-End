@@ -415,10 +415,10 @@ export default function AllBooksPage() {
           <div className="flex items-center gap-3 sm:gap-4">
             <Link
               href="/"
-              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+              className="w-10 h-10 flex items-center justify-center bg-gray-800/60 hover:bg-gray-700/80 dark:bg-gray-700/60 dark:hover:bg-gray-600/80 rounded-full shadow-md backdrop-blur-sm transition-colors"
               title={t('library.backToHome')}
             >
-              <ArrowLeft className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+              <ArrowLeft className="w-5 h-5 text-white" />
             </Link>
             <div className="flex items-center gap-2 sm:gap-3">
               <Library className="w-7 h-7 sm:w-8 sm:h-8" style={{ color: 'var(--icon-color-secondary)' }} />
