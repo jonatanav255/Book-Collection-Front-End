@@ -7,7 +7,9 @@ import type {
   Preferences,
   UpdatePreferencesRequest,
   PaginatedResponse,
+  BulkOperationResponse,
 } from '@/types';
+import { ReadingStatus } from '@/types';
 
 // Base URL should be http://localhost:8080/api (the /api prefix is included)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
@@ -109,6 +111,24 @@ export const booksApi = {
   async getStats(): Promise<LibraryStats> {
     const response = await fetch(`${API_URL}/books/stats`);
     return handleResponse<LibraryStats>(response);
+  },
+
+  async bulkDelete(ids: string[]): Promise<BulkOperationResponse> {
+    const response = await fetch(`${API_URL}/books/bulk`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    });
+    return handleResponse<BulkOperationResponse>(response);
+  },
+
+  async bulkUpdateStatus(ids: string[], status: ReadingStatus): Promise<BulkOperationResponse> {
+    const response = await fetch(`${API_URL}/books/bulk/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, status }),
+    });
+    return handleResponse<BulkOperationResponse>(response);
   },
 };
 

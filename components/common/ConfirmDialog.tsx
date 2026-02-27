@@ -36,7 +36,7 @@ export function ConfirmDialog({
         <p className="text-gray-700 dark:text-gray-300">{message}</p>
 
         <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose}>
             {cancelText}
           </Button>
           <Button variant={variant} onClick={handleConfirm}>

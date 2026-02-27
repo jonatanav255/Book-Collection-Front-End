@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { booksApi, ApiError } from '@/services/api';
 import { queryKeys } from './queryKeys';
-import type { Book, ReadingStatus, BatchUploadFileResult, PaginatedResponse } from '@/types';
+import type { Book, ReadingStatus, BatchUploadFileResult, PaginatedResponse, BulkOperationResponse } from '@/types';
 
 // Mutation-only hook for book CRUD operations
 // After each mutation, invalidates all book-related caches (list, stats, featured, details)
@@ -88,7 +88,19 @@ export function useBooks() {
     return updated;
   }, [invalidateBookCaches]);
 
-  return { uploadBook, uploadBooks, deleteBook, updateBook, updateBookStatus };
+  const bulkDelete = useCallback(async (ids: string[]): Promise<BulkOperationResponse> => {
+    const result = await booksApi.bulkDelete(ids);
+    invalidateBookCaches();
+    return result;
+  }, [invalidateBookCaches]);
+
+  const bulkUpdateStatus = useCallback(async (ids: string[], status: ReadingStatus): Promise<BulkOperationResponse> => {
+    const result = await booksApi.bulkUpdateStatus(ids, status);
+    invalidateBookCaches();
+    return result;
+  }, [invalidateBookCaches]);
+
+  return { uploadBook, uploadBooks, deleteBook, updateBook, updateBookStatus, bulkDelete, bulkUpdateStatus };
 }
 
 const PAGE_SIZE = 10;
@@ -196,6 +208,28 @@ export function usePaginatedBooks(filters: {
     );
   }, [queryClient, filterKey]);
 
+  // Optimistic removal: filter out multiple books from cached pages
+  const removeBooksFromList = useCallback((ids: string[]) => {
+    const idSet = new Set(ids);
+    queryClient.setQueryData<{ pages: PaginatedResponse<Book>[]; pageParams: number[] }>(
+      queryKeys.books.list(filterKey),
+      (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map(page => {
+            const filtered = page.content.filter(b => !idSet.has(b.id));
+            return {
+              ...page,
+              content: filtered,
+              totalElements: page.totalElements - (page.content.length - filtered.length),
+            };
+          }),
+        };
+      }
+    );
+  }, [queryClient, filterKey]);
+
   return {
     books,
     loading,
@@ -208,6 +242,7 @@ export function usePaginatedBooks(filters: {
     refetch,
     updateBookInList,
     removeBookFromList,
+    removeBooksFromList,
   };
 }
 

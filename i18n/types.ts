@@ -92,6 +92,21 @@ export interface Translations {
     progressText: string;
     readingStatus: string;
     finishedStatus: string;
+    selectBooks: string;
+    cancelSelection: string;
+    selectedCount: string;
+    selectAll: string;
+    deselectAll: string;
+    bulkDelete: string;
+    bulkDeleteConfirmTitle: string;
+    bulkDeleteConfirmMessage: string;
+    bulkDeleteSuccess: string;
+    bulkDeletePartial: string;
+    bulkDeleteFailed: string;
+    bulkStatusSuccess: string;
+    bulkStatusPartial: string;
+    bulkStatusFailed: string;
+    markSelectedAs: string;
   };
   upload: {
     uploadingBooks: string;

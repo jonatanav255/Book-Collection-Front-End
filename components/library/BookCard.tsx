@@ -3,7 +3,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Trash2, MoreVertical, CheckCircle, BookOpen, BookX, Pencil, Loader2 } from 'lucide-react';
+import { Trash2, MoreVertical, CheckCircle, BookOpen, BookX, Pencil, Loader2, Check } from 'lucide-react';
 import { Book, ReadingStatus } from '@/types';
 import { useBookCover } from '@/hooks/useBookCover';
 import { useClickOutside } from '@/hooks/useClickOutside';
@@ -15,9 +15,12 @@ interface BookCardProps {
   onDelete: (id: string) => void;
   onStatusChange?: (id: string, status: ReadingStatus) => void;
   onRename?: (id: string, title: string) => void;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
-export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusChange, onRename }: BookCardProps) {
+export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusChange, onRename, selectionMode, isSelected, onToggleSelect }: BookCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -36,51 +39,77 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
     ? 100
     : book.pageCount > 0 ? Math.round((book.currentPage / book.pageCount) * 100) : 0;
 
+  const coverContent = (
+    <div className="aspect-[3/4] relative bg-gray-200 dark:bg-gray-700 overflow-hidden">
+      {/* Shimmer placeholder */}
+      {!imageLoaded && (
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+      )}
+      <Image
+        src={imageUrl}
+        alt={book.title}
+        fill
+        className={`object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={handleLoad}
+        onError={handleError}
+        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+        quality={75}
+        priority={false}
+      />
+
+      {/* Selection checkbox overlay */}
+      {selectionMode && (
+        <div className="absolute top-2 left-2 z-10">
+          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+            isSelected
+              ? 'bg-blue-500 border-blue-500'
+              : 'bg-white/80 border-gray-400 dark:bg-gray-800/80 dark:border-gray-500'
+          }`}>
+            {isSelected && <Check className="w-4 h-4 text-white" />}
+          </div>
+        </div>
+      )}
+
+      {/* Opening overlay */}
+      {isOpening && !selectionMode && (
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+          <Loader2 className="w-8 h-8 text-white animate-spin" />
+        </div>
+      )}
+
+      {/* Progress Overlay */}
+      {progress > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+          <div className="w-full bg-gray-300 rounded-full h-2 overflow-hidden">
+            <div
+              className={`h-full transition-all ${book.status === 'FINISHED' ? 'bg-green-500' : 'bg-blue-500'}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-white text-xs mt-1 font-medium">
+            {book.status === 'FINISHED' ? t('library.complete') : t('library.percentComplete', { percent: progress })}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
-      <div className="group relative bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+      <div
+        className={`group relative bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition-all overflow-hidden ${
+          selectionMode && isSelected ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-900' : ''
+        } ${selectionMode ? 'cursor-pointer' : ''}`}
+        onClick={selectionMode ? () => onToggleSelect?.(book.id) : undefined}
+      >
         {/* Book Cover */}
-        <Link href={`/reader/${book.id}`} onClick={() => setIsOpening(true)}>
-          <div className="aspect-[3/4] relative bg-gray-200 dark:bg-gray-700 overflow-hidden">
-            {/* Shimmer placeholder */}
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
-            )}
-            <Image
-              src={imageUrl}
-              alt={book.title}
-              fill
-              className={`object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={handleLoad}
-              onError={handleError}
-              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              quality={75}
-              priority={false}
-            />
-
-            {/* Opening overlay */}
-            {isOpening && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
-                <Loader2 className="w-8 h-8 text-white animate-spin" />
-              </div>
-            )}
-
-            {/* Progress Overlay */}
-            {progress > 0 && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                <div className="w-full bg-gray-300 rounded-full h-2 overflow-hidden">
-                  <div
-                    className={`h-full transition-all ${book.status === 'FINISHED' ? 'bg-green-500' : 'bg-blue-500'}`}
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <p className="text-white text-xs mt-1 font-medium">
-                  {book.status === 'FINISHED' ? t('library.complete') : t('library.percentComplete', { percent: progress })}
-                </p>
-              </div>
-            )}
-          </div>
-        </Link>
+        {selectionMode ? (
+          coverContent
+        ) : (
+          <Link href={`/reader/${book.id}`} onClick={() => setIsOpening(true)}>
+            {coverContent}
+          </Link>
+        )}
 
         {/* Book Info */}
         <div className="p-4 h-[140px] flex flex-col">
@@ -112,6 +141,10 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
               autoFocus
               className="font-semibold text-gray-900 dark:text-gray-100 mb-1 min-h-[48px] w-full bg-transparent border border-blue-500 rounded px-1 outline-none"
             />
+          ) : selectionMode ? (
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 mb-1 min-h-[48px]">
+              {book.title}
+            </h3>
           ) : (
             <Link href={`/reader/${book.id}`}>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 mb-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors min-h-[48px]">
@@ -137,18 +170,20 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
               {book.status === 'FINISHED' ? t('library.finishedStatus') : book.status === 'READING' ? t('library.readingStatus') : t('library.unread')}
             </span>
 
-            {/* More Options Button */}
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              aria-label={t('common.moreOptions')}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </button>
+            {/* More Options Button - hidden in selection mode */}
+            {!selectionMode && (
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                aria-label={t('common.moreOptions')}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              </button>
+            )}
           </div>
 
           {/* Dropdown Menu */}
-          {showMenu && (
+          {showMenu && !selectionMode && (
             <div ref={menuRef} className="absolute right-0 bottom-4 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 min-w-[160px] sm:min-w-[180px]">
               {book.status !== 'UNREAD' && onStatusChange && (
                 <button

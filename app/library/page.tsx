@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, DragEvent } from 'react';
-import { Library, ArrowLeft, Upload } from 'lucide-react';
+import { Library, ArrowLeft, Upload, CheckSquare, X, Trash2, BookOpen, BookX, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useBooks, usePaginatedBooks } from '@/hooks/useBooks';
 import { useStats } from '@/hooks/useStats';
@@ -12,6 +12,7 @@ import { FilterBar } from '@/components/library/FilterBar';
 import { UploadButton } from '@/components/library/UploadButton';
 import { BookCardSkeleton } from '@/components/common/Loading';
 import { BatchUploadProgress } from '@/components/library/BatchUploadProgress';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { ReadingStatus } from '@/types';
 import type { BatchUploadFileResult } from '@/types';
 import { ApiError } from '@/services/api';
@@ -38,6 +39,12 @@ export default function AllBooksPage() {
   const [isDragging, setIsDragging] = useState(false);
   const dragCounterRef = useRef(0);
 
+  // Multi-select state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkOperationLoading, setBulkOperationLoading] = useState(false);
+
   const debouncedSearch = useDebounce(search, 150);
 
   const {
@@ -51,13 +58,14 @@ export default function AllBooksPage() {
     refetch,
     updateBookInList,
     removeBookFromList,
+    removeBooksFromList,
   } = usePaginatedBooks({
     search: debouncedSearch,
     sortBy,
     status: statusFilter || undefined,
   });
 
-  const { uploadBook, uploadBooks, deleteBook, updateBookStatus, updateBook } = useBooks();
+  const { uploadBook, uploadBooks, deleteBook, updateBookStatus, updateBook, bulkDelete, bulkUpdateStatus } = useBooks();
   const { data: statsData } = useStats();
   const { showToast } = useToast();
   const { t } = useLanguage();
@@ -69,6 +77,12 @@ export default function AllBooksPage() {
     finished: statsData?.finishedBooks ?? 0,
     unread: statsData?.unreadBooks ?? 0,
   };
+
+  // Exit selection mode when search/filters change
+  useEffect(() => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }, [debouncedSearch, sortBy, statusFilter]);
 
   // Scroll to top on mount and when search/filters change
   useEffect(() => {
@@ -208,6 +222,83 @@ export default function AllBooksPage() {
     }
   }, [updateBook, updateBookInList, showToast, t]);
 
+  // Selection mode handlers
+  const toggleSelectionMode = useCallback(() => {
+    setSelectionMode(prev => {
+      if (prev) setSelectedIds(new Set());
+      return !prev;
+    });
+  }, []);
+
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (selectedIds.size === books.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(books.map(b => b.id)));
+    }
+  }, [books, selectedIds.size]);
+
+  const handleBulkDelete = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    setBulkOperationLoading(true);
+    try {
+      const result = await bulkDelete(ids);
+      if (result.failureCount === 0) {
+        removeBooksFromList(ids);
+        showToast(t('library.bulkDeleteSuccess', { count: result.successCount }), 'success');
+      } else if (result.successCount > 0) {
+        const successIds = ids.filter(id => !result.failedIds.includes(id));
+        removeBooksFromList(successIds);
+        showToast(t('library.bulkDeletePartial', { success: result.successCount, failure: result.failureCount }), 'warning');
+      } else {
+        showToast(t('library.bulkDeleteFailed'), 'error');
+      }
+      setSelectionMode(false);
+      setSelectedIds(new Set());
+    } catch {
+      showToast(t('library.bulkDeleteFailed'), 'error');
+    } finally {
+      setBulkOperationLoading(false);
+      setShowBulkDeleteConfirm(false);
+    }
+  }, [selectedIds, bulkDelete, removeBooksFromList, showToast, t]);
+
+  const handleBulkStatusChange = useCallback(async (status: ReadingStatus) => {
+    const ids = Array.from(selectedIds);
+    setBulkOperationLoading(true);
+    try {
+      const result = await bulkUpdateStatus(ids, status);
+      if (result.failureCount === 0) {
+        showToast(t('library.bulkStatusSuccess', { count: result.successCount }), 'success');
+      } else if (result.successCount > 0) {
+        showToast(t('library.bulkStatusPartial', { success: result.successCount, failure: result.failureCount }), 'warning');
+      } else {
+        showToast(t('library.bulkStatusFailed'), 'error');
+      }
+      setSelectionMode(false);
+      setSelectedIds(new Set());
+      refetch();
+    } catch {
+      showToast(t('library.bulkStatusFailed'), 'error');
+    } finally {
+      setBulkOperationLoading(false);
+    }
+  }, [selectedIds, bulkUpdateStatus, showToast, t, refetch]);
+
+  const selectedCount = selectedIds.size;
+
   return (
     <div
       className="min-h-screen bg-gray-50 dark:bg-gray-900 relative"
@@ -226,6 +317,78 @@ export default function AllBooksPage() {
           </div>
         </div>
       )}
+
+      {/* Bulk Actions Toolbar */}
+      {selectionMode && (
+        <div className="sticky top-0 z-40 bg-teal-800 dark:bg-teal-900 text-white shadow-lg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleSelectionMode}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
+                aria-label={t('library.cancelSelection')}
+              >
+                <X className="w-4 h-4" />
+                <span className="hidden sm:inline">{t('library.cancelSelection')}</span>
+              </button>
+              <span className="font-medium text-sm sm:text-base">
+                {t('library.selectedCount', { count: selectedCount })}
+              </span>
+              <button
+                onClick={handleSelectAll}
+                className="text-sm underline hover:no-underline opacity-90 hover:opacity-100"
+              >
+                {selectedIds.size === books.length ? t('library.deselectAll') : t('library.selectAll')}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1 sm:gap-2">
+              {/* Status change buttons */}
+              <span className="text-xs sm:text-sm font-medium hidden sm:inline">{t('library.markSelectedAs')}:</span>
+              <button
+                onClick={() => handleBulkStatusChange(ReadingStatus.UNREAD)}
+                disabled={selectedCount === 0 || bulkOperationLoading}
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-gray-600 hover:bg-gray-700 disabled:opacity-40 disabled:hover:bg-gray-600 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                title={t('library.markAsUnread')}
+              >
+                <BookX className="w-4 h-4" />
+                <span className="hidden sm:inline">{t('library.unread')}</span>
+              </button>
+              <button
+                onClick={() => handleBulkStatusChange(ReadingStatus.READING)}
+                disabled={selectedCount === 0 || bulkOperationLoading}
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                title={t('library.markAsReading')}
+              >
+                <BookOpen className="w-4 h-4" />
+                <span className="hidden sm:inline">{t('library.readingStatus')}</span>
+              </button>
+              <button
+                onClick={() => handleBulkStatusChange(ReadingStatus.FINISHED)}
+                disabled={selectedCount === 0 || bulkOperationLoading}
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:hover:bg-green-600 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                title={t('library.markAsComplete')}
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">{t('library.finishedStatus')}</span>
+              </button>
+
+              <div className="w-px h-6 bg-white/30 mx-1" />
+
+              {/* Delete button */}
+              <button
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                disabled={selectedCount === 0 || bulkOperationLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:hover:bg-red-600 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="hidden sm:inline">{t('library.bulkDelete')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -251,7 +414,19 @@ export default function AllBooksPage() {
           </div>
 
           <div className="flex flex-col items-end gap-2">
-            <UploadButton onUpload={handleUpload} isLoading={uploading} />
+            <div className="flex items-center gap-3">
+              {/* Select mode toggle */}
+              {hasBooks && !selectionMode && (
+                <button
+                  onClick={toggleSelectionMode}
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 shadow-lg shadow-cyan-500/25 rounded-xl transition-all"
+                >
+                  <CheckSquare className="w-4 h-4" />
+                  {t('library.selectBooks')}
+                </button>
+              )}
+              <UploadButton onUpload={handleUpload} isLoading={uploading} />
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-300">{t('library.dragDropHint')}</p>
           </div>
         </div>
@@ -306,7 +481,16 @@ export default function AllBooksPage() {
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
               {books.map((book) => (
-                <BookCard key={book.id} book={book} onDelete={handleDelete} onStatusChange={handleStatusChange} onRename={handleRename} />
+                <BookCard
+                  key={book.id}
+                  book={book}
+                  onDelete={handleDelete}
+                  onStatusChange={handleStatusChange}
+                  onRename={handleRename}
+                  selectionMode={selectionMode}
+                  isSelected={selectedIds.has(book.id)}
+                  onToggleSelect={handleToggleSelect}
+                />
               ))}
               {loadingMore &&
                 [...Array(4)].map((_, i) => <BookCardSkeleton key={`skeleton-${i}`} />)}
@@ -328,6 +512,17 @@ export default function AllBooksPage() {
         results={batchResults}
         currentIndex={batchIndex}
         isComplete={batchComplete}
+      />
+
+      {/* Bulk Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={showBulkDeleteConfirm}
+        onClose={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={handleBulkDelete}
+        title={t('library.bulkDeleteConfirmTitle', { count: selectedCount })}
+        message={t('library.bulkDeleteConfirmMessage', { count: selectedCount })}
+        confirmText={t('library.bulkDelete')}
+        variant="danger"
       />
     </div>
   );

@@ -100,6 +100,13 @@ export interface PaginatedResponse<T> {
   last: boolean;
 }
 
+// Bulk Operation Types
+export interface BulkOperationResponse {
+  successCount: number;
+  failureCount: number;
+  failedIds: string[];
+}
+
 // Batch Upload Types
 export type BatchUploadFileStatus = 'pending' | 'uploading' | 'success' | 'skipped' | 'failed';
 
