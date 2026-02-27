@@ -11,7 +11,6 @@ import {
   StickyNote,
   Volume2,
   Settings,
-  Search,
   Timer,
   TimerReset,
 } from 'lucide-react';

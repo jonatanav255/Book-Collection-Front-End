@@ -211,21 +211,6 @@ export const preferencesApi = {
 // Audio API (Google Cloud Text-to-Speech)
 export const audioApi = {
   /**
-   * Get audio for a specific book page (MP3 format)
-   * Uses cache-first strategy - generates audio if not cached
-   * @param bookId - Book UUID
-   * @param pageNumber - Page number (1-indexed)
-   * @returns MP3 audio blob
-   */
-  async getPageAudio(bookId: string, pageNumber: number): Promise<Blob> {
-    const response = await fetch(`${API_URL}/books/${bookId}/pages/${pageNumber}/audio`);
-    if (!response.ok) {
-      throw new ApiError(response.status, 'Failed to get audio');
-    }
-    return response.blob();
-  },
-
-  /**
    * Get audio URL for HTML5 audio player
    * @param bookId - Book UUID
    * @param pageNumber - Page number (1-indexed)
@@ -243,17 +228,6 @@ export const audioApi = {
    */
   async checkAudioStatus(bookId: string, pageNumber: number): Promise<{ bookId: string; pageNumber: number; cached: boolean }> {
     const response = await fetch(`${API_URL}/books/${bookId}/pages/${pageNumber}/audio/status`);
-    return handleResponse(response);
-  },
-
-  /**
-   * Delete all cached audio files for a book
-   * @param bookId - Book UUID
-   */
-  async deleteBookAudio(bookId: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_URL}/books/${bookId}/audio`, {
-      method: 'DELETE',
-    });
     return handleResponse(response);
   },
 
@@ -314,23 +288,6 @@ export const audioApi = {
     return handleResponse(response);
   },
 
-  /**
-   * Get page text with word-level timings for read-along
-   * @param bookId - Book UUID
-   * @param pageNumber - Page number (1-indexed)
-   */
-  async getPageTextWithTimings(bookId: string, pageNumber: number): Promise<{
-    text: string;
-    audioUrl: string;
-    wordTimings: Array<{
-      word: string;
-      startTime: number;
-      endTime: number;
-    }>;
-  }> {
-    const response = await fetch(`${API_URL}/books/${bookId}/pages/${pageNumber}/text-with-timings`);
-    return handleResponse(response);
-  },
 };
 
 // Collection API — download Insomnia collection export

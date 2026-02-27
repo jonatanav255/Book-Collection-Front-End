@@ -239,6 +239,5 @@ export function useAudioPlayer({
     stop,
     togglePlayPause,
     recheckCache,
-    audioElement: audioRef.current, // Expose audio element for sync
   };
 }

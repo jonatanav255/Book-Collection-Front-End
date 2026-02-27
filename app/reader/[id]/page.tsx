@@ -67,7 +67,6 @@ export default function ReaderPage() {
     togglePlayPause,
     stop,
     recheckCache,
-    audioElement,
   } = useAudioPlayer({
     bookId,
     currentPage,

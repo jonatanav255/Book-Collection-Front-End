@@ -39,16 +39,6 @@ export function Loading({ size = 'md', text }: LoadingProps) {
   );
 }
 
-export function LoadingSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4" />
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2" />
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-    </div>
-  );
-}
-
 export function BookCardSkeleton() {
   return (
     <div className="animate-pulse">

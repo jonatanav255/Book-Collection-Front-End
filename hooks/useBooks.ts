@@ -233,7 +233,6 @@ export function usePaginatedBooks(filters: {
   return {
     books,
     loading,
-    refreshing,
     loadingMore,
     hasMore,
     totalElements,

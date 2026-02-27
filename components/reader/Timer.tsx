@@ -19,7 +19,6 @@ interface TimerProps {
   isOpen: boolean;  // Whether the timer modal is visible
   onClose: () => void;  // Callback to close the timer modal
   onOpen?: () => void;  // Callback to reopen the timer modal from compact view
-  compact?: boolean;  // If true, render compact navbar version (when running)
   onRunningChange?: (isRunning: boolean) => void;  // Callback when timer running state changes
 }
 
@@ -47,7 +46,7 @@ interface PomodoroSettings {
  * - Progress bars for countdown/Pomodoro modes
  * - Session tracking for Pomodoro
  */
-export function Timer({ isOpen, onClose, onOpen, compact = false, onRunningChange }: TimerProps) {
+export function Timer({ isOpen, onClose, onOpen, onRunningChange }: TimerProps) {
   const { t } = useLanguage();
 
   // Timer mode and running state
