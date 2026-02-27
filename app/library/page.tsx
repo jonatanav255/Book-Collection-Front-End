@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, DragEvent } from 'react';
-import { Library, ArrowLeft, Upload, CheckSquare, X, Trash2, BookOpen, BookX, CheckCircle } from 'lucide-react';
+import { Library, ArrowLeft, Upload, CheckSquare, X, Trash2, BookOpen, BookX, CheckCircle, MinusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useBooks, usePaginatedBooks } from '@/hooks/useBooks';
 import { useStats } from '@/hooks/useStats';
@@ -44,6 +44,7 @@ export default function AllBooksPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [bulkOperationLoading, setBulkOperationLoading] = useState(false);
+  const lastClickedIndexRef = useRef<number | null>(null);
 
   const debouncedSearch = useDebounce(search, 150);
 
@@ -230,7 +231,25 @@ export default function AllBooksPage() {
     });
   }, []);
 
-  const handleToggleSelect = useCallback((id: string) => {
+  const handleToggleSelect = useCallback((id: string, event?: React.MouseEvent) => {
+    const index = books.findIndex(b => b.id === id);
+
+    // Shift+click range selection
+    if (event?.shiftKey && lastClickedIndexRef.current !== null && selectionMode) {
+      const start = Math.min(lastClickedIndexRef.current, index);
+      const end = Math.max(lastClickedIndexRef.current, index);
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        for (let i = start; i <= end; i++) {
+          next.add(books[i].id);
+        }
+        return next;
+      });
+      lastClickedIndexRef.current = index;
+      return;
+    }
+
+    lastClickedIndexRef.current = index;
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -240,7 +259,7 @@ export default function AllBooksPage() {
       }
       return next;
     });
-  }, []);
+  }, [books, selectionMode]);
 
   const handleSelectAll = useCallback(() => {
     if (selectedIds.size === books.length) {
@@ -320,25 +339,26 @@ export default function AllBooksPage() {
 
       {/* Bulk Actions Toolbar */}
       {selectionMode && (
-        <div className="sticky top-0 z-40 bg-teal-800 dark:bg-teal-900 text-white shadow-lg">
+        <div className="fixed top-0 left-0 right-0 z-40 bg-teal-800 dark:bg-teal-900 text-white shadow-lg">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <button
                 onClick={toggleSelectionMode}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
-                aria-label={t('library.cancelSelection')}
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                aria-label={t('common.close')}
               >
-                <X className="w-4 h-4" />
-                <span className="hidden sm:inline">{t('library.cancelSelection')}</span>
+                <X className="w-4 h-4 text-white" strokeWidth={2} />
               </button>
-              <span className="font-medium text-sm sm:text-base">
+              <span className="font-bold text-sm sm:text-base text-white">
                 {t('library.selectedCount', { count: selectedCount })}
               </span>
               <button
-                onClick={handleSelectAll}
-                className="text-sm underline hover:no-underline opacity-90 hover:opacity-100"
+                onClick={() => setSelectedIds(new Set())}
+                disabled={selectedCount === 0}
+                className="flex items-center gap-1.5 text-sm px-2.5 py-1 rounded-full border border-white/30 hover:border-white/60 hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-white/30 disabled:hover:bg-transparent"
               >
-                {selectedIds.size === books.length ? t('library.deselectAll') : t('library.selectAll')}
+                <MinusCircle className="w-3.5 h-3.5" />
+                {t('library.deselectAll')}
               </button>
             </div>
 

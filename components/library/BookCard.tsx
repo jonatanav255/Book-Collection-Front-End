@@ -17,7 +17,7 @@ interface BookCardProps {
   onRename?: (id: string, title: string) => void;
   selectionMode?: boolean;
   isSelected?: boolean;
-  onToggleSelect?: (id: string) => void;
+  onToggleSelect?: (id: string, event?: React.MouseEvent) => void;
 }
 
 export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusChange, onRename, selectionMode, isSelected, onToggleSelect }: BookCardProps) {
@@ -100,7 +100,7 @@ export const BookCard = React.memo(function BookCard({ book, onDelete, onStatusC
         className={`group relative bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition-all overflow-hidden ${
           selectionMode && isSelected ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-900' : ''
         } ${selectionMode ? 'cursor-pointer' : ''}`}
-        onClick={selectionMode ? () => onToggleSelect?.(book.id) : undefined}
+        onClick={selectionMode ? (e: React.MouseEvent) => onToggleSelect?.(book.id, e) : undefined}
       >
         {/* Book Cover */}
         {selectionMode ? (
