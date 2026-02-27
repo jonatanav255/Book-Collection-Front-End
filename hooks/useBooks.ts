@@ -138,8 +138,17 @@ export function usePaginatedBooks(filters: {
     refetchOnWindowFocus: true,
   });
 
-  // Flatten all pages into a single array: [page0.content, page1.content, ...]
-  const books = data?.pages.flatMap(page => page.content) ?? [];
+  // Flatten all pages into a single array and deduplicate (a book can appear in
+  // two consecutive pages if the dataset shifts between fetches)
+  const books = useMemo(() => {
+    const all = data?.pages.flatMap(page => page.content) ?? [];
+    const seen = new Set<string>();
+    return all.filter(book => {
+      if (seen.has(book.id)) return false;
+      seen.add(book.id);
+      return true;
+    });
+  }, [data]);
   const totalElements = data?.pages[0]?.totalElements ?? 0;
   const hasMore = hasNextPage ?? false;
 
