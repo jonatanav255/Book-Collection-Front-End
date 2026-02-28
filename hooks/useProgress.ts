@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { progressApi } from '@/services/api';
+import { queryKeys } from './queryKeys';
 import type { BookProgress } from '@/types';
 
 const DEBOUNCE_DELAY = 2000; // 2 seconds
 
 export function useProgress(bookId: string | null) {
+  const queryClient = useQueryClient();
   const [progress, setProgress] = useState<BookProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +54,8 @@ export function useProgress(bookId: string | null) {
         try {
           await progressApi.update(bookId, updates);
           pendingUpdateRef.current = null;
+          // Invalidate book caches so library reflects auto-status changes
+          queryClient.invalidateQueries({ queryKey: queryKeys.books.all });
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Failed to update progress');
           throw err;
@@ -74,13 +79,15 @@ export function useProgress(bookId: string | null) {
           try {
             await progressApi.update(bookId, pendingUpdateRef.current);
             pendingUpdateRef.current = null;
+            // Invalidate book caches so library reflects auto-status changes
+            queryClient.invalidateQueries({ queryKey: queryKeys.books.all });
           } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to update progress');
           }
         }, DEBOUNCE_DELAY);
       }
     },
-    [bookId]
+    [bookId, queryClient]
   );
 
   const setCurrentPage = useCallback(
