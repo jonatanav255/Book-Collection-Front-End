@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Timer as TimerIcon, Play, Pause, RotateCcw, X, Settings } from 'lucide-react';
+import { Timer as TimerIcon, Play, Pause, Square, RotateCcw, X, Settings } from 'lucide-react';
 import { useLanguage } from '@/i18n';
 
 /**
@@ -311,8 +311,12 @@ export function Timer({ isOpen, onClose, onOpen, onRunningChange }: TimerProps) 
     return 0;  // Count-up mode has no progress bar
   };
 
-  // Show compact view when running but modal is closed
-  if (isRunning && !isOpen) {
+  // Show compact view when running or paused (hasStarted) but modal is closed
+  const hasStarted = isRunning || (mode === 'countdown' && countdownTotalSeconds < 25 * 60 && countdownTotalSeconds > 0)
+    || (mode === 'countup' && countUpSeconds > 0)
+    || (mode === 'pomodoro' && pomodoroSeconds < pomodoroSettings.workMinutes * 60);
+
+  if (hasStarted && !isOpen) {
     return (
       <div className="fixed top-3 right-2 sm:right-48 z-50">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg">
@@ -324,11 +328,22 @@ export function Timer({ isOpen, onClose, onOpen, onRunningChange }: TimerProps) 
             {getCurrentTime()}
           </button>
           <button
-            onClick={() => setIsRunning(false)}
+            onClick={() => setIsRunning(!isRunning)}
             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-            title={t('timer.pauseTimer')}
+            title={isRunning ? t('timer.pauseTimer') : t('timer.continueTimer')}
           >
-            <Pause className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            {isRunning ? (
+              <Pause className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <Play className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
+          <button
+            onClick={handleReset}
+            className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+            title={t('timer.stopTimer')}
+          >
+            <Square className="w-4 h-4 text-red-500 dark:text-red-400" />
           </button>
         </div>
       </div>

@@ -231,6 +231,8 @@ export interface Translations {
     customizePomodoro: string;
     start: string;
     pauseTimer: string;
+    continueTimer: string;
+    stopTimer: string;
     reset: string;
     enableNotifications: string;
     openTimer: string;

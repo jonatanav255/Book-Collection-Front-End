@@ -231,6 +231,8 @@ export const es: Translations = {
     customizePomodoro: 'Personalizar Pomodoro',
     start: 'Iniciar',
     pauseTimer: 'Pausar',
+    continueTimer: 'Continuar',
+    stopTimer: 'Detener',
     reset: 'Reiniciar',
     enableNotifications: 'Activar notificaciones para alertas del temporizador',
     openTimer: 'Abrir temporizador',
