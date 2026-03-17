@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Library, Download } from 'lucide-react';
+import { Library, Download, LogOut } from 'lucide-react';
 import { collectionApi } from '@/services/api';
 import { useToast } from '@/components/common/Toast';
 import { Button } from '@/components/common/Button';
@@ -12,6 +12,7 @@ import { BatchUploadProgress } from '@/components/library/BatchUploadProgress';
 import { useBooks } from '@/hooks/useBooks';
 import { LanguageToggle } from '@/components/common/LanguageToggle';
 import { useLanguage } from '@/i18n';
+import { AuthGuard, useAuth } from '@/components/auth/AuthProvider';
 import type { BatchUploadFileResult } from '@/types';
 
 export default function HomePage() {
@@ -25,6 +26,7 @@ export default function HomePage() {
   const { uploadBook, uploadBooks } = useBooks();
   const { showToast } = useToast();
   const { t } = useLanguage();
+  const { logout } = useAuth();
 
   const handleUpload = async (files: File[]) => {
     if (files.length === 1) {
@@ -63,6 +65,7 @@ export default function HomePage() {
   };
 
   return (
+    <AuthGuard>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -102,6 +105,14 @@ export default function HomePage() {
               {t('home.apiCollection')}
             </Button>
             <UploadButton onUpload={handleUpload} isLoading={uploading} />
+            <Button
+              variant="secondary"
+              onClick={logout}
+              className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/25"
+            >
+              <LogOut className="w-4 h-4" />
+              {t('auth.logout')}
+            </Button>
           </div>
         </div>
 
@@ -125,5 +136,6 @@ export default function HomePage() {
         isComplete={batchComplete}
       />
     </div>
+    </AuthGuard>
   );
 }

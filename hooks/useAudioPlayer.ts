@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { audioApi } from '@/services/api';
+import { audioApi, getAuthHeaders } from '@/services/api';
 
 interface UseAudioPlayerOptions {
   bookId: string | null;
@@ -146,8 +146,24 @@ export function useAudioPlayer({
           }
         };
 
-        // Load audio URL (backend handles cache/generation)
-        audio.src = audioApi.getPageAudioUrl(currentBookId, pageNumber);
+        // Fetch audio with auth headers and create a blob URL
+        const audioUrl = audioApi.getPageAudioUrl(currentBookId, pageNumber);
+        const response = await fetch(audioUrl, { headers: getAuthHeaders() });
+        if (!response.ok) {
+          throw new Error('Failed to fetch audio');
+        }
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        audio.src = blobUrl;
+
+        // Clean up the blob URL when the audio element is done with it
+        const originalOnEnded = audio.onended;
+        audio.onended = (ev) => {
+          URL.revokeObjectURL(blobUrl);
+          if (typeof originalOnEnded === 'function') {
+            originalOnEnded.call(audio, ev);
+          }
+        };
 
         // Start playing
         await audio.play();

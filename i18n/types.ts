@@ -254,4 +254,19 @@ export interface Translations {
     audioHeading: string;
     language: string;
   };
+  auth: {
+    login: string;
+    createAccount: string;
+    username: string;
+    password: string;
+    loggingIn: string;
+    creatingAccount: string;
+    loginFailed: string;
+    registrationLocked: string;
+    passwordTooShort: string;
+    usernameRequired: string;
+    welcome: string;
+    signInToContinue: string;
+    logout: string;
+  };
 }

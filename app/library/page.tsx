@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, DragEvent } from 'react';
-import { Library, ArrowLeft, Upload, CheckSquare, X, Trash2, BookOpen, BookX, CheckCircle, MinusCircle } from 'lucide-react';
+import { Library, ArrowLeft, Upload, CheckSquare, X, Trash2, BookOpen, BookX, CheckCircle, MinusCircle, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useBooks, usePaginatedBooks } from '@/hooks/useBooks';
 import { useStats } from '@/hooks/useStats';
@@ -17,6 +17,7 @@ import { ReadingStatus } from '@/types';
 import type { BatchUploadFileResult } from '@/types';
 import { ApiError } from '@/services/api';
 import { useLanguage } from '@/i18n';
+import { AuthGuard, useAuth } from '@/components/auth/AuthProvider';
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -70,6 +71,7 @@ export default function AllBooksPage() {
   const { data: statsData } = useStats();
   const { showToast } = useToast();
   const { t } = useLanguage();
+  const { logout } = useAuth();
   const hasBooks = books.length > 0;
 
   const stats = {
@@ -319,6 +321,7 @@ export default function AllBooksPage() {
   const selectedCount = selectedIds.size;
 
   return (
+    <AuthGuard>
     <div
       className="min-h-screen bg-gray-50 dark:bg-gray-900 relative"
       onDragEnter={handleDragEnter}
@@ -446,6 +449,13 @@ export default function AllBooksPage() {
                 </button>
               )}
               <UploadButton onUpload={handleUpload} isLoading={uploading} />
+              <button
+                onClick={logout}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white bg-gray-800/60 hover:bg-gray-700/80 rounded-xl transition-all"
+                title={t('auth.logout')}
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-300">{t('library.dragDropHint')}</p>
           </div>
@@ -545,5 +555,6 @@ export default function AllBooksPage() {
         variant="danger"
       />
     </div>
+    </AuthGuard>
   );
 }

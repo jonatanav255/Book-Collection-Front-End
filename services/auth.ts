@@ -1,0 +1,125 @@
+import { AuthResponse } from "@/types/auth";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+
+const STORAGE_KEYS = {
+  ACCESS_TOKEN: "bookshelf-access-token",
+  REFRESH_TOKEN: "bookshelf-refresh-token",
+  USERNAME: "bookshelf-username",
+} as const;
+
+export function getAccessToken(): string | null {
+  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+}
+
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+}
+
+export function getUsername(): string | null {
+  return localStorage.getItem(STORAGE_KEYS.USERNAME);
+}
+
+export function storeTokens(response: AuthResponse): void {
+  localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.accessToken);
+  localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refreshToken);
+  localStorage.setItem(STORAGE_KEYS.USERNAME, response.username);
+}
+
+export function clearTokens(): void {
+  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.USERNAME);
+}
+
+export function isAuthenticated(): boolean {
+  return getAccessToken() !== null;
+}
+
+export async function checkRegistrationOpen(): Promise<boolean> {
+  const response = await fetch(`${API_BASE_URL}/auth/status`);
+  if (!response.ok) return false;
+  const data = await response.json();
+  return data.registrationOpen;
+}
+
+export async function login(
+  username: string,
+  password: string
+): Promise<AuthResponse> {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error || "Login failed");
+  }
+
+  const data: AuthResponse = await response.json();
+  storeTokens(data);
+  return data;
+}
+
+export async function register(
+  username: string,
+  password: string
+): Promise<AuthResponse> {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!response.ok) {
+    if (response.status === 403) {
+      throw new Error("An account already exists");
+    }
+    const error = await response.text();
+    throw new Error(error || "Registration failed");
+  }
+
+  const data: AuthResponse = await response.json();
+  storeTokens(data);
+  return data;
+}
+
+export async function refreshTokens(): Promise<AuthResponse> {
+  const refreshToken = getRefreshToken();
+
+  if (!refreshToken) {
+    throw new Error("No refresh token available");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken }),
+  });
+
+  if (!response.ok) {
+    clearTokens();
+    throw new Error("Token refresh failed");
+  }
+
+  const data: AuthResponse = await response.json();
+  storeTokens(data);
+  return data;
+}
+
+export async function logout(): Promise<void> {
+  const refreshToken = getRefreshToken();
+
+  try {
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+  } finally {
+    clearTokens();
+  }
+}

@@ -5,6 +5,7 @@ import * as pdfjs from 'pdfjs-dist';
 import { TextLayer } from 'pdfjs-dist';
 import { Loading } from '../common/Loading';
 import { useLanguage } from '@/i18n';
+import { getAuthHeaders } from '@/services/api';
 
 /**
  * Configure PDF.js worker
@@ -74,7 +75,10 @@ export function PDFViewer({
         setLoading(true);
         setError(null);
 
-        const loadingTask = pdfjs.getDocument(pdfUrl);
+        const loadingTask = pdfjs.getDocument({
+          url: pdfUrl,
+          httpHeaders: getAuthHeaders(),
+        });
         const pdf = await loadingTask.promise;
 
         if (isMounted) {

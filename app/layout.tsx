@@ -7,6 +7,7 @@ import { ToastProvider } from "@/components/common/Toast";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { QueryProvider } from "@/components/common/QueryProvider";
 import { LanguageProvider } from "@/i18n";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,13 +26,15 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased`} suppressHydrationWarning>
         <ErrorBoundary>
           <QueryProvider>
-            <LanguageProvider>
-              <ThemeProvider>
-                <ToastProvider>
-                  {children}
-                </ToastProvider>
-              </ThemeProvider>
-            </LanguageProvider>
+            <AuthProvider>
+              <LanguageProvider>
+                <ThemeProvider>
+                  <ToastProvider>
+                    {children}
+                  </ToastProvider>
+                </ThemeProvider>
+              </LanguageProvider>
+            </AuthProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>

@@ -10,9 +10,69 @@ import type {
   BulkOperationResponse,
 } from '@/types';
 import { ReadingStatus } from '@/types';
+import { getAccessToken, refreshTokens, clearTokens } from './auth';
 
 // Base URL should be http://localhost:8080/api (the /api prefix is included)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+
+// Module-level promise for deduplicating concurrent token refreshes
+let refreshPromise: Promise<void> | null = null;
+
+/**
+ * Returns Authorization headers using the current access token.
+ * Useful for callers that need to attach auth to URLs handled outside fetch
+ * (e.g., pdf.js, <img src>, <audio src>).
+ */
+export function getAuthHeaders(): { Authorization: string } | Record<string, never> {
+  const token = getAccessToken();
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
+}
+
+/**
+ * Authenticated fetch wrapper.
+ * - Attaches the JWT access token as a Bearer header.
+ * - On 401, attempts ONE token refresh (deduplicated) then retries.
+ * - If refresh fails, clears tokens and redirects to /login.
+ */
+async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const token = getAccessToken();
+  const headers = new Headers(init?.headers);
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  let response = await fetch(input, { ...init, headers });
+
+  if (response.status === 401) {
+    try {
+      // Deduplicate concurrent refresh attempts
+      if (!refreshPromise) {
+        refreshPromise = refreshTokens().then(() => {}).finally(() => {
+          refreshPromise = null;
+        });
+      }
+      await refreshPromise;
+
+      // Retry the original request with the new token
+      const newToken = getAccessToken();
+      const retryHeaders = new Headers(init?.headers);
+      if (newToken) {
+        retryHeaders.set('Authorization', `Bearer ${newToken}`);
+      }
+      response = await fetch(input, { ...init, headers: retryHeaders });
+    } catch {
+      clearTokens();
+      // Don't redirect here — AuthGuard handles navigation to /login.
+      // Just return the original 401 response so callers can handle it.
+      return response;
+    }
+  }
+
+  return response;
+}
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -59,17 +119,17 @@ export const booksApi = {
     if (params.sortBy) queryParams.append('sortBy', params.sortBy);
     if (params.status) queryParams.append('status', params.status);
 
-    const response = await fetch(`${API_URL}/books?${queryParams}`, { signal });
+    const response = await authFetch(`${API_URL}/books?${queryParams}`, { signal });
     return handleResponse<PaginatedResponse<Book>>(response);
   },
 
   async getById(id: string): Promise<Book> {
-    const response = await fetch(`${API_URL}/books/${id}`);
+    const response = await authFetch(`${API_URL}/books/${id}`);
     return handleResponse<Book>(response);
   },
 
   async getFeatured(limit: number = 6): Promise<Book[]> {
-    const response = await fetch(`${API_URL}/books/featured?limit=${limit}`);
+    const response = await authFetch(`${API_URL}/books/featured?limit=${limit}`);
     return handleResponse<Book[]>(response);
   },
 
@@ -77,7 +137,7 @@ export const booksApi = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${API_URL}/books`, {
+    const response = await authFetch(`${API_URL}/books`, {
       method: 'POST',
       body: formData,
     });
@@ -85,7 +145,7 @@ export const booksApi = {
   },
 
   async update(id: string, data: Partial<Book>): Promise<Book> {
-    const response = await fetch(`${API_URL}/books/${id}`, {
+    const response = await authFetch(`${API_URL}/books/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -94,7 +154,7 @@ export const booksApi = {
   },
 
   async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_URL}/books/${id}`, {
+    const response = await authFetch(`${API_URL}/books/${id}`, {
       method: 'DELETE',
     });
     return handleResponse<void>(response);
@@ -109,12 +169,12 @@ export const booksApi = {
   },
 
   async getStats(): Promise<LibraryStats> {
-    const response = await fetch(`${API_URL}/books/stats`);
+    const response = await authFetch(`${API_URL}/books/stats`);
     return handleResponse<LibraryStats>(response);
   },
 
   async bulkDelete(ids: string[]): Promise<BulkOperationResponse> {
-    const response = await fetch(`${API_URL}/books/bulk`, {
+    const response = await authFetch(`${API_URL}/books/bulk`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids }),
@@ -123,7 +183,7 @@ export const booksApi = {
   },
 
   async bulkUpdateStatus(ids: string[], status: ReadingStatus): Promise<BulkOperationResponse> {
-    const response = await fetch(`${API_URL}/books/bulk/status`, {
+    const response = await authFetch(`${API_URL}/books/bulk/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids, status }),
@@ -135,12 +195,12 @@ export const booksApi = {
 // Progress API
 export const progressApi = {
   async get(bookId: string): Promise<BookProgress> {
-    const response = await fetch(`${API_URL}/books/${bookId}/progress`);
+    const response = await authFetch(`${API_URL}/books/${bookId}/progress`);
     return handleResponse<BookProgress>(response);
   },
 
   async update(bookId: string, progress: Partial<BookProgress>): Promise<BookProgress> {
-    const response = await fetch(`${API_URL}/books/${bookId}/progress`, {
+    const response = await authFetch(`${API_URL}/books/${bookId}/progress`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(progress),
@@ -153,12 +213,12 @@ export const progressApi = {
 export const notesApi = {
   async list(bookId: string, sortBy?: 'page' | 'date'): Promise<Note[]> {
     const queryParams = sortBy ? `?sortBy=${sortBy}` : '';
-    const response = await fetch(`${API_URL}/books/${bookId}/notes${queryParams}`);
+    const response = await authFetch(`${API_URL}/books/${bookId}/notes${queryParams}`);
     return handleResponse<Note[]>(response);
   },
 
   async create(bookId: string, note: CreateNoteRequest): Promise<Note> {
-    const response = await fetch(`${API_URL}/books/${bookId}/notes`, {
+    const response = await authFetch(`${API_URL}/books/${bookId}/notes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(note),
@@ -167,7 +227,7 @@ export const notesApi = {
   },
 
   async update(noteId: string, updates: UpdateNoteRequest): Promise<Note> {
-    const response = await fetch(`${API_URL}/notes/${noteId}`, {
+    const response = await authFetch(`${API_URL}/notes/${noteId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
@@ -176,14 +236,14 @@ export const notesApi = {
   },
 
   async delete(noteId: string): Promise<void> {
-    const response = await fetch(`${API_URL}/notes/${noteId}`, {
+    const response = await authFetch(`${API_URL}/notes/${noteId}`, {
       method: 'DELETE',
     });
     return handleResponse<void>(response);
   },
 
   async export(bookId: string): Promise<Blob> {
-    const response = await fetch(`${API_URL}/books/${bookId}/notes/export`);
+    const response = await authFetch(`${API_URL}/books/${bookId}/notes/export`);
     if (!response.ok) {
       throw new ApiError(response.status, 'Failed to export notes');
     }
@@ -194,12 +254,12 @@ export const notesApi = {
 // Preferences API
 export const preferencesApi = {
   async get(): Promise<Preferences> {
-    const response = await fetch(`${API_URL}/preferences`);
+    const response = await authFetch(`${API_URL}/preferences`);
     return handleResponse<Preferences>(response);
   },
 
   async update(preferences: UpdatePreferencesRequest): Promise<Preferences> {
-    const response = await fetch(`${API_URL}/preferences`, {
+    const response = await authFetch(`${API_URL}/preferences`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(preferences),
@@ -227,7 +287,7 @@ export const audioApi = {
    * @returns Cache status
    */
   async checkAudioStatus(bookId: string, pageNumber: number): Promise<{ bookId: string; pageNumber: number; cached: boolean }> {
-    const response = await fetch(`${API_URL}/books/${bookId}/pages/${pageNumber}/audio/status`);
+    const response = await authFetch(`${API_URL}/books/${bookId}/pages/${pageNumber}/audio/status`);
     return handleResponse(response);
   },
 
@@ -256,7 +316,7 @@ export const audioApi = {
       url += `?${params.toString()}`;
     }
 
-    const response = await fetch(url, {
+    const response = await authFetch(url, {
       method: 'POST',
     });
     return handleResponse(response);
@@ -273,7 +333,7 @@ export const audioApi = {
     progressPercentage: number;
     errorMessage?: string;
   }> {
-    const response = await fetch(`${API_URL}/books/${bookId}/audio/generation-status`);
+    const response = await authFetch(`${API_URL}/books/${bookId}/audio/generation-status`);
     return handleResponse(response);
   },
 
@@ -282,7 +342,7 @@ export const audioApi = {
    * @param bookId - Book UUID
    */
   async cancelBatchGeneration(bookId: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_URL}/books/${bookId}/audio/generation`, {
+    const response = await authFetch(`${API_URL}/books/${bookId}/audio/generation`, {
       method: 'DELETE',
     });
     return handleResponse(response);
@@ -293,7 +353,7 @@ export const audioApi = {
 // Collection API — download Insomnia collection export
 export const collectionApi = {
   async downloadInsomnia(): Promise<void> {
-    const response = await fetch(`${API_URL}/collection/insomnia`);
+    const response = await authFetch(`${API_URL}/collection/insomnia`);
     if (!response.ok) {
       throw new ApiError(response.status, 'Failed to download API collection');
     }

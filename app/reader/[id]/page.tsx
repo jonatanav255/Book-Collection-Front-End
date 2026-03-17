@@ -19,6 +19,7 @@ import { Loading } from '@/components/common/Loading';
 import { LanguageToggle } from '@/components/common/LanguageToggle';
 import { booksApi } from '@/services/api';
 import { useLanguage } from '@/i18n';
+import { AuthGuard } from '@/components/auth/AuthProvider';
 import { CreateNoteRequest, UpdateNoteRequest } from '@/types';
 
 export default function ReaderPage() {
@@ -218,6 +219,7 @@ export default function ReaderPage() {
   const pdfUrl = booksApi.getPdfUrl(bookId);
 
   return (
+    <AuthGuard>
     <div className="h-screen flex flex-col bg-white dark:bg-gray-900">
       {/* Controls */}
       <ReaderControls
@@ -306,5 +308,6 @@ export default function ReaderPage() {
         </div>
       </Modal>
     </div>
+    </AuthGuard>
   );
 }
