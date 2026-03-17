@@ -25,6 +25,7 @@ interface PDFViewerProps {
   scale: number;  // Zoom level (1.0 = 100%, 1.5 = 150%, etc.)
   onPageChange: (page: number) => void;  // Callback when page changes
   onTotalPagesLoad: (total: number) => void;  // Callback when PDF loads with total page count
+  onEffectiveScaleChange?: (scale: number) => void;  // Reports actual rendered scale
 }
 
 /**
@@ -47,6 +48,7 @@ export function PDFViewer({
   scale,
   onPageChange,
   onTotalPagesLoad,
+  onEffectiveScaleChange,
 }: PDFViewerProps) {
   const { t } = useLanguage();
 
@@ -123,21 +125,22 @@ export function PDFViewer({
 
         if (!isMounted) return;
 
-        // On small screens, fit PDF to fill the container (width-constrained)
-        // On all screens, never exceed container width
-        const wrapperEl = canvasRef.current?.parentElement?.parentElement;
+        // Calculate fit-to-width scale so the PDF fills available space
+        // Go up to the overflow-auto scroll container to get the real viewport width
+        const scrollContainer = canvasRef.current?.parentElement?.parentElement?.parentElement;
         let effectiveScale = scale;
-        if (wrapperEl) {
-          const containerWidth = wrapperEl.clientWidth;
+        if (scrollContainer) {
+          const availableWidth = scrollContainer.clientWidth - 32; // subtract padding
           const baseViewport = page.getViewport({ scale: 1 });
-          const fitWidthScale = containerWidth / baseViewport.width;
-          // On mobile (< 768px), use fit-to-width as the scale
+          const fitWidthScale = availableWidth / baseViewport.width;
+          // On mobile, always fit to width; on desktop, use whichever is smaller
           if (window.innerWidth < 768) {
             effectiveScale = fitWidthScale;
-          } else if (fitWidthScale < scale) {
-            effectiveScale = fitWidthScale;
+          } else {
+            effectiveScale = Math.min(scale, fitWidthScale);
           }
         }
+        onEffectiveScaleChange?.(effectiveScale);
         const viewport = page.getViewport({ scale: effectiveScale });
         const canvas = canvasRef.current;
 

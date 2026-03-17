@@ -10,6 +10,7 @@ vi.mock('@/services/api', () => ({
       `http://localhost:8080/api/books/${bookId}/pages/${page}/audio`
     ),
   },
+  getAuthHeaders: vi.fn(() => ({ Authorization: 'Bearer test-token' })),
 }));
 
 import { audioApi } from '@/services/api';
@@ -60,6 +61,24 @@ describe('useAudioPlayer', () => {
 
     // Mock the Audio constructor to return our mock instance
     vi.stubGlobal('Audio', vi.fn(() => mockAudioInstance));
+
+    // Mock fetch to return a fake audio blob
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      blob: () => Promise.resolve(new Blob(['audio-data'], { type: 'audio/mpeg' })),
+    }));
+
+    // Mock URL.createObjectURL / revokeObjectURL
+    if (!URL.createObjectURL) {
+      URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+    } else {
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    }
+    if (!URL.revokeObjectURL) {
+      URL.revokeObjectURL = vi.fn();
+    } else {
+      vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    }
 
     // Default: page is not cached
     vi.mocked(audioApi.checkAudioStatus).mockResolvedValue({

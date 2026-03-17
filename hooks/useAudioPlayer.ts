@@ -28,6 +28,7 @@ export function useAudioPlayer({
   const currentBookIdRef = useRef<string | null>(bookId);
   const isLoadingRef = useRef<boolean>(false);
   const shouldContinuePlayingRef = useRef<boolean>(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Update refs when props change
   useEffect(() => {
@@ -55,11 +56,15 @@ export function useAudioPlayer({
     checkCache();
   }, [bookId, currentPage, enabled]);
 
-  // Cleanup audio when component unmounts or page changes
+  // Cleanup audio and abort in-flight fetches when page changes or unmount
   useEffect(() => {
     return () => {
+      // Abort any in-flight audio fetch so it doesn't block the next page
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
       if (audioRef.current) {
-        // Remove event listeners before cleanup
         audioRef.current.onended = null;
         audioRef.current.onerror = null;
         audioRef.current.oncanplay = null;
@@ -73,6 +78,8 @@ export function useAudioPlayer({
         URL.revokeObjectURL(blobUrlRef.current);
         blobUrlRef.current = null;
       }
+      // Reset loading guard so the next page can load
+      isLoadingRef.current = false;
     };
   }, [currentPage]);
 
@@ -85,10 +92,13 @@ export function useAudioPlayer({
         return;
       }
 
-      // Prevent duplicate requests
-      if (isLoadingRef.current) {
-        return;
+      // Abort any previous in-flight fetch
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
+
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
 
       try {
         isLoadingRef.current = true;
@@ -98,7 +108,6 @@ export function useAudioPlayer({
         // Stop and cleanup any existing audio
         if (audioRef.current) {
           const oldAudio = audioRef.current;
-          // Remove event listeners to prevent old audio from triggering errors
           oldAudio.onended = null;
           oldAudio.onerror = null;
           oldAudio.oncanplay = null;
@@ -114,11 +123,10 @@ export function useAudioPlayer({
 
         // Set up event listeners
         audio.onended = () => {
-          // Keep playing flag true for auto-advance
           shouldContinuePlayingRef.current = true;
           setIsPlaying(false);
           setIsPaused(false);
-          setError(null); // Clear any previous errors
+          setError(null);
           isLoadingRef.current = false;
           onPageComplete?.();
         };
@@ -136,7 +144,6 @@ export function useAudioPlayer({
         audio.oncanplay = () => {
           setIsLoading(false);
           isLoadingRef.current = false;
-          // Audio loaded successfully — backend cached it, update indicator instantly
           setIsCached(true);
         };
 
@@ -157,13 +164,20 @@ export function useAudioPlayer({
           blobUrlRef.current = null;
         }
 
-        // Fetch audio with auth headers and create a blob URL
+        // Fetch audio with auth headers — abortable so page navigation cancels it
         const audioUrl = audioApi.getPageAudioUrl(currentBookId, pageNumber);
-        const response = await fetch(audioUrl, { headers: getAuthHeaders() });
+        const response = await fetch(audioUrl, {
+          headers: getAuthHeaders(),
+          signal: abortController.signal,
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch audio');
         }
         const blob = await response.blob();
+
+        // If aborted between blob() and play(), bail out
+        if (abortController.signal.aborted) return;
+
         const blobUrl = URL.createObjectURL(blob);
         blobUrlRef.current = blobUrl;
         audio.src = blobUrl;
@@ -181,6 +195,10 @@ export function useAudioPlayer({
         // Start playing
         await audio.play();
       } catch (err) {
+        // Silently ignore abort errors — they're expected on page navigation
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return;
+        }
         const errorMsg = err instanceof Error ? err.message : 'Failed to play audio';
         setError(errorMsg);
         setIsPlaying(false);
@@ -214,14 +232,21 @@ export function useAudioPlayer({
   }, [isPlaying]);
 
   const stop = useCallback(() => {
+    // Abort any in-flight fetch
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-      setIsPaused(false);
-      setError(null); // Clear errors when stopping
-      shouldContinuePlayingRef.current = false;
     }
+    setIsPlaying(false);
+    setIsPaused(false);
+    setIsLoading(false);
+    setError(null);
+    isLoadingRef.current = false;
+    shouldContinuePlayingRef.current = false;
   }, []);
 
   const togglePlayPause = useCallback(() => {

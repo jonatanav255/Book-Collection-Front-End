@@ -38,13 +38,14 @@ export default function ReaderPage() {
 
   const [currentPage, setCurrentPageState] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [scale, setScale] = useState(1.5);
+  const [scale, setScale] = useState(2.25);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showReadAloud, setShowReadAloud] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [effectiveScale, setEffectiveScale] = useState(scale);
 
   const { showToast } = useToast();
   const { t } = useLanguage();
@@ -225,7 +226,7 @@ export default function ReaderPage() {
       <ReaderControls
         currentPage={currentPage}
         totalPages={totalPages}
-        scale={scale}
+        scale={effectiveScale}
         onPageChange={handlePageChange}
         onScaleChange={setScale}
         onToggleFullscreen={toggleFullscreen}
@@ -245,6 +246,7 @@ export default function ReaderPage() {
           scale={scale}
           onPageChange={handlePageChange}
           onTotalPagesLoad={setTotalPages}
+          onEffectiveScaleChange={setEffectiveScale}
         />
 
         {/* Read Aloud Controls Overlay */}
