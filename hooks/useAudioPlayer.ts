@@ -23,6 +23,7 @@ export function useAudioPlayer({
   const [isCached, setIsCached] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
   const currentPageRef = useRef<number>(currentPage);
   const currentBookIdRef = useRef<string | null>(bookId);
   const isLoadingRef = useRef<boolean>(false);
@@ -67,6 +68,10 @@ export function useAudioPlayer({
         audioRef.current.pause();
         audioRef.current.src = '';
         audioRef.current = null;
+      }
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
       }
     };
   }, [currentPage]);
@@ -146,6 +151,12 @@ export function useAudioPlayer({
           }
         };
 
+        // Revoke the previous blob URL before creating a new one
+        if (blobUrlRef.current) {
+          URL.revokeObjectURL(blobUrlRef.current);
+          blobUrlRef.current = null;
+        }
+
         // Fetch audio with auth headers and create a blob URL
         const audioUrl = audioApi.getPageAudioUrl(currentBookId, pageNumber);
         const response = await fetch(audioUrl, { headers: getAuthHeaders() });
@@ -154,12 +165,14 @@ export function useAudioPlayer({
         }
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
+        blobUrlRef.current = blobUrl;
         audio.src = blobUrl;
 
         // Clean up the blob URL when the audio element is done with it
         const originalOnEnded = audio.onended;
         audio.onended = (ev) => {
           URL.revokeObjectURL(blobUrl);
+          blobUrlRef.current = null;
           if (typeof originalOnEnded === 'function') {
             originalOnEnded.call(audio, ev);
           }

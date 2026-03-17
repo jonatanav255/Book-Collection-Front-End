@@ -87,18 +87,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const token = getAccessToken();
-    const username = getUsername();
+    async function initAuth() {
+      const token = getAccessToken();
+      const username = getUsername();
 
-    if (token && username) {
-      setUser({ username });
-      refreshTokens().catch(() => {
-        clearTokens();
-        setUser(null);
-      });
+      if (token && username) {
+        try {
+          await refreshTokens();
+          setUser({ username: getUsername() || username });
+        } catch {
+          clearTokens();
+          setUser(null);
+        }
+      }
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
+    initAuth();
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {

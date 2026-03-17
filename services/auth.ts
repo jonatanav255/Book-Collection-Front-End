@@ -10,27 +10,47 @@ const STORAGE_KEYS = {
 } as const;
 
 export function getAccessToken(): string | null {
-  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  try {
+    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  } catch {
+    return null;
+  }
 }
 
 export function getRefreshToken(): string | null {
-  return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+  try {
+    return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+  } catch {
+    return null;
+  }
 }
 
 export function getUsername(): string | null {
-  return localStorage.getItem(STORAGE_KEYS.USERNAME);
+  try {
+    return localStorage.getItem(STORAGE_KEYS.USERNAME);
+  } catch {
+    return null;
+  }
 }
 
 export function storeTokens(response: AuthResponse): void {
-  localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.accessToken);
-  localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refreshToken);
-  localStorage.setItem(STORAGE_KEYS.USERNAME, response.username);
+  try {
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.accessToken);
+    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refreshToken);
+    localStorage.setItem(STORAGE_KEYS.USERNAME, response.username);
+  } catch {
+    // localStorage unavailable (e.g. private browsing) — tokens will not persist
+  }
 }
 
 export function clearTokens(): void {
-  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.USERNAME);
+  try {
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USERNAME);
+  } catch {
+    // localStorage unavailable — nothing to clear
+  }
 }
 
 export function isAuthenticated(): boolean {
