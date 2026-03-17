@@ -29,6 +29,9 @@ export function useAudioPlayer({
   const isLoadingRef = useRef<boolean>(false);
   const shouldContinuePlayingRef = useRef<boolean>(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Tracks whether audio playback is active (playing OR loading) so page
+  // navigation knows to restart audio on the new page
+  const isActiveRef = useRef<boolean>(false);
 
   // Update refs when props change
   useEffect(() => {
@@ -102,6 +105,7 @@ export function useAudioPlayer({
 
       try {
         isLoadingRef.current = true;
+        isActiveRef.current = true;
         setIsLoading(true);
         setError(null);
 
@@ -205,6 +209,7 @@ export function useAudioPlayer({
         setIsPaused(false);
         setIsLoading(false);
         isLoadingRef.current = false;
+        isActiveRef.current = false;
         onError?.(err instanceof Error ? err : new Error(errorMsg));
       }
     },
@@ -246,6 +251,7 @@ export function useAudioPlayer({
     setIsLoading(false);
     setError(null);
     isLoadingRef.current = false;
+    isActiveRef.current = false;
     shouldContinuePlayingRef.current = false;
   }, []);
 
@@ -257,15 +263,12 @@ export function useAudioPlayer({
     }
   }, [isPlaying, isPaused, play, pause]);
 
-  // When page changes while playing, load new page audio
+  // When page changes while audio is active (playing or loading), load new page audio
   useEffect(() => {
-    // Auto-advance: play next page after previous finished
     if (shouldContinuePlayingRef.current) {
       shouldContinuePlayingRef.current = false;
       loadAndPlayAudio(currentPage);
-    }
-    // Manual page change while playing: continue playing new page
-    else if (isPlaying && !isPaused) {
+    } else if (isActiveRef.current) {
       loadAndPlayAudio(currentPage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
