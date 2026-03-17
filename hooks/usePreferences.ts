@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { preferencesApi } from '@/services/api';
+import { getAccessToken } from '@/services/auth';
 import { queryKeys } from './queryKeys';
 import type { Preferences, UpdatePreferencesRequest, ThemePreset, FontSize } from '@/types';
 
@@ -11,6 +12,7 @@ export function usePreferences() {
   const { data: preferences, isLoading: loading, error: queryError } = useQuery({
     queryKey: queryKeys.preferences.all,
     queryFn: () => preferencesApi.get(),
+    enabled: !!getAccessToken(),
     staleTime: 10 * 60 * 1000,   // Fresh for 10 min
     gcTime: 30 * 60 * 1000,      // Keep in memory for 30 min
   });

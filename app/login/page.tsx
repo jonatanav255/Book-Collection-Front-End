@@ -6,6 +6,7 @@ import { Library } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useLanguage } from '@/i18n';
+import { checkRegistrationOpen } from '@/services/auth';
 
 type AuthMode = 'login' | 'register';
 
@@ -19,11 +20,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState(true);
+
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       router.replace('/');
     }
   }, [isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    checkRegistrationOpen().then(setRegistrationOpen);
+  }, []);
 
   function validate(): string | null {
     if (!username.trim()) return t('auth.usernameRequired');
@@ -120,11 +127,14 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => { setMode('register'); setError(''); }}
+              disabled={!registrationOpen}
+              onClick={() => { if (registrationOpen) { setMode('register'); setError(''); } }}
               className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
-                mode === 'register'
-                  ? 'bg-gray-700 text-white shadow-sm'
-                  : 'text-gray-400 hover:text-gray-300'
+                !registrationOpen
+                  ? 'text-gray-600 cursor-not-allowed'
+                  : mode === 'register'
+                    ? 'bg-gray-700 text-white shadow-sm'
+                    : 'text-gray-400 hover:text-gray-300'
               }`}
             >
               {t('auth.createAccount')}
