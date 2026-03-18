@@ -11,6 +11,7 @@ import {
   register as authRegister,
   logout as authLogout,
   refreshTokens,
+  setAuthFailureListener,
 } from '@/services/auth';
 
 interface User {
@@ -86,6 +87,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  // Subscribe to auth failure events so that when authFetch detects an
+  // expired/revoked token and clears localStorage, React state updates
+  // and AuthGuard redirects to /login.
+  useEffect(() => {
+    setAuthFailureListener(() => {
+      setUser(null);
+      queryClient.clear();
+    });
+    return () => setAuthFailureListener(null);
+  }, [queryClient]);
+
   useEffect(() => {
     async function initAuth() {
       const token = getAccessToken();
@@ -96,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await refreshTokens();
           setUser({ username: getUsername() || username });
         } catch {
-          clearTokens();
+          // refreshTokens already clears tokens and notifies via listener
           setUser(null);
         }
       }

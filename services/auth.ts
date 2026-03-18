@@ -9,6 +9,19 @@ const STORAGE_KEYS = {
   USERNAME: "bookshelf-username",
 } as const;
 
+// Listener invoked when tokens are cleared due to an auth failure (expired/revoked).
+// AuthProvider subscribes to this so it can update React state and trigger redirect.
+type AuthFailureListener = () => void;
+let onAuthFailure: AuthFailureListener | null = null;
+
+export function setAuthFailureListener(listener: AuthFailureListener | null): void {
+  onAuthFailure = listener;
+}
+
+function notifyAuthFailure(): void {
+  onAuthFailure?.();
+}
+
 export function getAccessToken(): string | null {
   try {
     return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
@@ -111,6 +124,8 @@ export async function refreshTokens(): Promise<AuthResponse> {
   const refreshToken = getRefreshToken();
 
   if (!refreshToken) {
+    clearTokens();
+    notifyAuthFailure();
     throw new Error("No refresh token available");
   }
 
@@ -122,6 +137,7 @@ export async function refreshTokens(): Promise<AuthResponse> {
 
   if (!response.ok) {
     clearTokens();
+    notifyAuthFailure();
     throw new Error("Token refresh failed");
   }
 

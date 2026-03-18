@@ -10,7 +10,7 @@ import type {
   BulkOperationResponse,
 } from '@/types';
 import { ReadingStatus } from '@/types';
-import { getAccessToken, refreshTokens, clearTokens } from './auth';
+import { getAccessToken, refreshTokens } from './auth';
 
 // Base URL should be http://localhost:8080/api (the /api prefix is included)
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
@@ -64,9 +64,8 @@ async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<
       }
       response = await fetch(input, { ...init, headers: retryHeaders });
     } catch {
-      clearTokens();
-      // Don't redirect here — AuthGuard handles navigation to /login.
-      // Just return the original 401 response so callers can handle it.
+      // refreshTokens() already clears tokens and notifies AuthProvider,
+      // which triggers AuthGuard to redirect to /login.
       return response;
     }
   }
