@@ -64,12 +64,13 @@ export function ReaderControls({
     hideTimeout.current = setTimeout(() => setVisible(false), 1500);
 
     const handleMouseMove = (e: MouseEvent) => {
-      // Show when mouse is near the top of the screen
-      if (e.clientY < 60) {
+      const overControls = controlsRef.current?.contains(e.target as Node);
+      if (e.clientY < 60 || overControls) {
+        // Show when mouse is near the top or over the toolbar
         setVisible(true);
         if (hideTimeout.current) clearTimeout(hideTimeout.current);
-      } else if (!controlsRef.current?.contains(e.target as Node)) {
-        // Hide after delay when mouse moves away
+      } else {
+        // Schedule hide when mouse moves away
         if (hideTimeout.current) clearTimeout(hideTimeout.current);
         hideTimeout.current = setTimeout(() => setVisible(false), 1500);
       }
