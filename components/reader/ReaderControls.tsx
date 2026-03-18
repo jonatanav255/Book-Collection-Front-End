@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -48,6 +48,39 @@ export function ReaderControls({
 }: ReaderControlsProps) {
   const { t } = useLanguage();
   const [pageInput, setPageInput] = useState(currentPage.toString());
+  const [visible, setVisible] = useState(true);
+  const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
+
+  // Auto-hide toolbar in fullscreen mode
+  useEffect(() => {
+    if (!isFullscreen) {
+      setVisible(true);
+      if (hideTimeout.current) clearTimeout(hideTimeout.current);
+      return;
+    }
+
+    // Hide after a short delay when entering fullscreen
+    hideTimeout.current = setTimeout(() => setVisible(false), 1500);
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Show when mouse is near the top of the screen
+      if (e.clientY < 60) {
+        setVisible(true);
+        if (hideTimeout.current) clearTimeout(hideTimeout.current);
+      } else if (!controlsRef.current?.contains(e.target as Node)) {
+        // Hide after delay when mouse moves away
+        if (hideTimeout.current) clearTimeout(hideTimeout.current);
+        hideTimeout.current = setTimeout(() => setVisible(false), 1500);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (hideTimeout.current) clearTimeout(hideTimeout.current);
+    };
+  }, [isFullscreen]);
 
   const handlePageInputChange = (value: string) => {
     setPageInput(value);
@@ -92,7 +125,21 @@ export function ReaderControls({
   }, [currentPage]);
 
   return (
-    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-2 py-2 sm:px-4 sm:py-3 relative z-20">
+    <div
+      ref={controlsRef}
+      onMouseEnter={() => {
+        if (isFullscreen) {
+          setVisible(true);
+          if (hideTimeout.current) clearTimeout(hideTimeout.current);
+        }
+      }}
+      onMouseLeave={() => {
+        if (isFullscreen) {
+          hideTimeout.current = setTimeout(() => setVisible(false), 1500);
+        }
+      }}
+      className={`bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-2 py-2 sm:px-4 sm:py-3 relative z-20 transition-transform duration-300 ${isFullscreen && !visible ? '-translate-y-full' : 'translate-y-0'}`}
+    >
       <div className="flex items-center justify-between gap-1 sm:gap-4">
         {/* Left: Navigation */}
         <div className="flex items-center gap-1 sm:gap-3">
