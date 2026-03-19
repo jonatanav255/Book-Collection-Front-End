@@ -55,6 +55,7 @@ export function PDFViewer({
   // Refs for DOM elements
   const canvasRef = useRef<HTMLCanvasElement>(null);  // Canvas for PDF rendering
   const containerRef = useRef<HTMLDivElement>(null);  // PDF container
+  const scrollContainerRef = useRef<HTMLDivElement>(null);  // Scroll container
   const textLayerRef = useRef<HTMLDivElement>(null);  // Text layer for selection
   const textLayerInstanceRef = useRef<TextLayer | null>(null);  // Active TextLayer instance
 
@@ -103,6 +104,11 @@ export function PDFViewer({
     };
   }, [pdfUrl, onTotalPagesLoad]);
 
+  // Scroll to top when page changes
+  useEffect(() => {
+    scrollContainerRef.current?.scrollTo(0, 0);
+  }, [pageNumber]);
+
   /**
    * Render current PDF page
    * Handles both canvas rendering (visual) and text layer creation (selection)
@@ -126,8 +132,7 @@ export function PDFViewer({
         if (!isMounted) return;
 
         // Calculate fit-to-width scale so the PDF fills available space
-        // Go up to the overflow-auto scroll container to get the real viewport width
-        const scrollContainer = canvasRef.current?.parentElement?.parentElement?.parentElement;
+        const scrollContainer = scrollContainerRef.current;
         let effectiveScale = scale;
         if (scrollContainer) {
           const availableWidth = scrollContainer.clientWidth - 32; // subtract padding
@@ -227,7 +232,7 @@ export function PDFViewer({
   }
 
   return (
-    <div className="w-full h-full overflow-auto bg-gray-100 dark:bg-gray-950 p-0 sm:p-4">
+    <div ref={scrollContainerRef} className="w-full h-full overflow-auto bg-gray-100 dark:bg-gray-950 p-0 sm:p-4">
       <div className="flex items-center justify-center min-w-full min-h-full">
         <div ref={containerRef} className="relative">
           <canvas
